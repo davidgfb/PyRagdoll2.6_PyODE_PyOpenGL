@@ -3,36 +3,77 @@ from math import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-from ode import Infinity,World,Space,GeomPlane,JointGroup,Body,Mass,GeomCCylinder,FixedJoint,BallJoint,UniversalJoint,ParamLoStop,ParamHiStop,ParamLoStop2,ParamHiStop2,HingeJoint,areConnected,collide,ContactJoint
+from ode import Infinity,World,Space,GeomPlane,\
+JointGroup,Body,Mass,GeomCCylinder,FixedJoint,\
+BallJoint,UniversalJoint,ParamLoStop,ParamHiStop,\
+ParamLoStop2,ParamHiStop2,HingeJoint,areConnected,\
+collide,ContactJoint
 
 def sign(x):
-	"""Returns 1.0 if x is positive, -1.0 if x is negative or zero."""
-	if x > 0.0: return 1.0
-	else: return -1.0
+	"""
+	Returns 1.0 if x is positive, 
+	-1.0 if x is negative or zero.
+	"""  
+	valor = -1.0
+	
+	if x > 0.0:
+		valor = 1.0
+	   
+	return valor
 
 def len3(v):
 	"""Returns the length of 3-vector v."""
-	return sqrt(v[0]**2 + v[1]**2 + v[2]**2)
+	suma = 0.0
+
+	for nColumna in range(3):
+		suma += v[nColumna] ** 2
+
+	return sqrt(suma)
 
 def neg3(v):
 	"""Returns the negation of 3-vector v."""
-	return (-v[0], -v[1], -v[2])
+	vector = []
+
+	for nColumna in range(3):
+		vector.append(-v[nColumna])
+
+	return vector
 
 def add3(a, b):
 	"""Returns the sum of 3-vectors a and b."""
-	return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
+	vector = []
+
+	for nColumna in range(3):
+		vector.append(a[nColumna] + b[nColumna])
+
+	return vector
 
 def sub3(a, b):
 	"""Returns the difference between 3-vectors a and b."""
-	return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+	vector = []
+
+	for nColumna in range(3):
+		vector.append(a[nColumna] - b[nColumna])
+
+	return vector
 
 def mul3(v, s):
 	"""Returns 3-vector v multiplied by scalar s."""
-	return (v[0] * s, v[1] * s, v[2] * s)
+	vector = []
+
+	for nColumna in range(3):
+		vector.append(s * v[nColumna])
+
+	return vector
 
 def div3(v, s):
 	"""Returns 3-vector v divided by scalar s."""
-	return (v[0] / s, v[1] / s, v[2] / s)
+	vector = []
+
+	for nColumna in range(3):
+		vector.append(v[nColumna] / s) #no es lo mismo que s/v
+
+	return vector
 
 def dist3(a, b):
 	"""Returns the distance between point 3-vectors a and b."""
@@ -41,18 +82,43 @@ def dist3(a, b):
 def norm3(v):
 	"""Returns the unit length 3-vector parallel to 3-vector v."""
 	l = len3(v)
-	if (l > 0.0): return (v[0] / l, v[1] / l, v[2] / l)
-	else: return (0.0, 0.0, 0.0)
+	vector = [0.0, 0.0, 0.0]
+
+	if (l > 0.0): 
+		vector = div3(v,l)
+	
+	return vector
 
 def dot3(a, b):
 	"""Returns the dot product of 3-vectors a and b."""
-	return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])
+	suma = 0.0
+
+	for nColumna in range(3):
+		suma += a[nColumna] * b[nColumna]
+
+	return suma
 
 def cross(a, b):
-	"""Returns the cross product of 3-vectors a and b."""
-	return (a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
-		a[0] * b[1] - a[1] * b[0])
+	"""
+	Returns the cross product of 3-vectors a and b.
+	return numpy.cross(a,b)
+	"""
+	matriz = []
 
+	matrizColumnas = [[1,2], #1%3,2%3
+					  [2,0], #5%3,6%3  #2%3,3%3
+					  [0,1]  #9%3,10%3 #3%3,1%3
+			   		 ]
+
+	for nFila in range(3):
+		columnas = matrizColumnas[nFila]
+		columna0 = columnas[0] #o matrizColumnas[nFila][0]
+		columna1 = columnas[1] #o matrizColumnas[nFila][1]
+		matriz.append(a[columna0] * b[columna1] - \
+					  b[columna0] * a[columna1]) 
+
+	return matriz 
+	
 def project3(v, d):
 	"""Returns projection of 3-vector v onto unit 3-vector d."""
 	return mul3(v, dot3(norm3(v), d))
