@@ -143,11 +143,23 @@ def project3(v, d):
 	return mul3(v, dot3(norm3(v), d))
 
 def acosdot3(a, b):
-	"""Returns the angle between unit 3-vectors a and b."""
+	"""
+	Returns the angle between unit 3-vectors a and b.
+	o
+	valor = acos(x) # mayor carga mejor legibilidad
+	elif x > 1.0:
+		valor = 0.0
+	"""
 	x = dot3(a, b)
-	if x < -1.0: return pi
-	elif x > 1.0: return 0.0
-	else: return acos(x)
+	valor = 0.0 # x > 1.0 (1,inf)
+
+	if x < -1.0: # (-inf, -1)
+		valor = pi
+
+	elif -1.0 <= x <= 1.0: # [-1, 1]
+		valor = acos(x)
+		
+	return valor
 
 def rotate3(m, v):
 	"""Returns the rotation of 3-vector v by 3x3 (row major) matrix m."""
