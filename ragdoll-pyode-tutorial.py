@@ -3,7 +3,7 @@ from math import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
-import ode
+from ode import Infinity,World,Space,GeomPlane,JointGroup,Body,Mass,GeomCCylinder,FixedJoint,BallJoint,UniversalJoint,ParamLoStop,ParamHiStop,ParamLoStop2,ParamHiStop2,HingeJoint,areConnected,collide,ContactJoint
 
 def sign(x):
 	"""Returns 1.0 if x is positive, -1.0 if x is negative or zero."""
@@ -261,8 +261,8 @@ class RagDoll():
 		#   radius at joints
 		cyllen = dist3(p1, p2) - radius
 
-		body = ode.Body(self.world)
-		m = ode.Mass()
+		body = Body(self.world)
+		m = Mass()
 		m.setCappedCylinder(self.density, 3, radius, cyllen)
 		body.setMass(m)
 
@@ -272,7 +272,7 @@ class RagDoll():
 		body.radius = radius
 
 		# create a capsule geom for collision detection
-		geom = ode.GeomCCylinder(self.space, radius, cyllen)
+		geom = GeomCCylinder(self.space, radius, cyllen)
 		geom.setBody(body)
 
 		# define body rotation automatically from body axis
@@ -295,7 +295,7 @@ class RagDoll():
 		return body
 
 	def addFixedJoint(self, body1, body2):
-		joint = ode.FixedJoint(self.world)
+		joint = FixedJoint(self.world)
 		joint.attach(body1, body2)
 		joint.setFixed()
 
@@ -304,17 +304,17 @@ class RagDoll():
 
 		return joint
 
-	def addHingeJoint(self, body1, body2, anchor, axis, loStop = -ode.Infinity,
-		hiStop = ode.Infinity):
+	def addHingeJoint(self, body1, body2, anchor, axis, loStop = -Infinity,
+		hiStop = Infinity):
 
 		anchor = add3(anchor, self.offset)
 
-		joint = ode.HingeJoint(self.world)
+		joint = HingeJoint(self.world)
 		joint.attach(body1, body2)
 		joint.setAnchor(anchor)
 		joint.setAxis(axis)
-		joint.setParam(ode.ParamLoStop, loStop)
-		joint.setParam(ode.ParamHiStop, hiStop)
+		joint.setParam(ParamLoStop, loStop)
+		joint.setParam(ParamHiStop, hiStop)
 
 		joint.style = "hinge"
 		self.joints.append(joint)
@@ -322,20 +322,20 @@ class RagDoll():
 		return joint
 
 	def addUniversalJoint(self, body1, body2, anchor, axis1, axis2,
-		loStop1 = -ode.Infinity, hiStop1 = ode.Infinity,
-		loStop2 = -ode.Infinity, hiStop2 = ode.Infinity):
+		loStop1 = -Infinity, hiStop1 = Infinity,
+		loStop2 = -Infinity, hiStop2 = Infinity):
 
 		anchor = add3(anchor, self.offset)
 
-		joint = ode.UniversalJoint(self.world)
+		joint = UniversalJoint(self.world)
 		joint.attach(body1, body2)
 		joint.setAnchor(anchor)
 		joint.setAxis1(axis1)
 		joint.setAxis2(axis2)
-		joint.setParam(ode.ParamLoStop, loStop1)
-		joint.setParam(ode.ParamHiStop, hiStop1)
-		joint.setParam(ode.ParamLoStop2, loStop2)
-		joint.setParam(ode.ParamHiStop2, hiStop2)
+		joint.setParam(ParamLoStop, loStop1)
+		joint.setParam(ParamHiStop, hiStop1)
+		joint.setParam(ParamLoStop2, loStop2)
+		joint.setParam(ParamHiStop2, hiStop2)
 
 		joint.style = "univ"
 		self.joints.append(joint)
@@ -348,7 +348,7 @@ class RagDoll():
 		anchor = add3(anchor, self.offset)
 
 		# create the joint
-		joint = ode.BallJoint(self.world)
+		joint = BallJoint(self.world)
 		joint.attach(body1, body2)
 		joint.setAnchor(anchor)
 
@@ -432,8 +432,8 @@ def createCapsule(world, space, density, length, radius):
 	# create capsule body (aligned along the z-axis so that it matches the
 	#   GeomCCylinder created below, which is aligned along the z-axis by
 	#   default)
-	body = ode.Body(world)
-	M = ode.Mass()
+	body = Body(world)
+	M = Mass()
 	M.setCappedCylinder(density, 3, radius, length)
 	body.setMass(M)
 
@@ -443,7 +443,7 @@ def createCapsule(world, space, density, length, radius):
 	body.radius = radius
 
 	# create a capsule geom for collision detection
-	geom = ode.GeomCCylinder(space, radius, length)
+	geom = GeomCCylinder(space, radius, length)
 	geom.setBody(body)
 
 	return body, geom
@@ -456,18 +456,18 @@ def near_callback(args, geom1, geom2):
 	joints if they do.
 	"""
 
-	if (ode.areConnected(geom1.getBody(), geom2.getBody())):
+	if (areConnected(geom1.getBody(), geom2.getBody())):
 		return
 
 	# check if the objects collide
-	contacts = ode.collide(geom1, geom2)
+	contacts = collide(geom1, geom2)
 
 	# create contact joints
 	world, contactgroup = args
 	for c in contacts:
 		c.setBounce(0.2)
 		c.setMu(500) # 0-5 = very slippery, 50-500 = normal, 5000 = very sticky
-		j = ode.ContactJoint(world, contactgroup, c)
+		j = ContactJoint(world, contactgroup, c)
 		j.attach(geom1.getBody(), geom2.getBody())
 
 def prepare_GL():
@@ -602,16 +602,16 @@ glutInitWindowSize(width, height);
 glutCreateWindow("PyODE Ragdoll Simulation")
 
 # create an ODE world object
-world = ode.World()
+world = World()
 world.setGravity((0.0, -9.81, 0.0))
 world.setERP(0.1)
 world.setCFM(1E-4)
 
 # create an ODE space object
-space = ode.Space()
+space = Space()
 
 # create a plane geom to simulate a floor
-floor = ode.GeomPlane(space, (0, 1, 0), 0)
+floor = GeomPlane(space, (0, 1, 0), 0)
 
 # create a list to store any ODE bodies which are not part of the ragdoll (this
 #   is needed to avoid Python garbage collecting these bodies)
@@ -619,7 +619,7 @@ bodies = []
 
 # create a joint group for the contact joints generated during collisions
 #   between two bodies collide
-contactgroup = ode.JointGroup()
+contactgroup = JointGroup()
 
 # set the initial simulation loop parameters
 fps = 60
