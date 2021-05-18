@@ -746,18 +746,18 @@ class RagDoll():
 def createCapsule(world, space, density, length, \
 	radius):
 	"""
-	Creates a capsule body and corresponding geom.
-	# create capsule body (aligned along the z-axis so that it matches the
-	#   GeomCCylinder created below, which is aligned along the z-axis by
-	#   default)
+	# Creates a capsule body and corresponding geom.
+	# create capsule body (aligned along the z-axis 
+	# so that it matches the
+	# GeomCCylinder created below, which is aligned 
+	# along the z-axis by
+	# default)
 	"""
-	body = Body(world)
-	M    = Mass()
-	
+	M    = Mass()	
 	M.setCappedCylinder(density, 3, radius, length)
-	body.setMass(M)
 
-	# set parameters for drawing the body
+	body = Body(world)
+	body.setMass(M)
 	body.shape  = "capsule"
 	body.length = length
 	body.radius = radius
@@ -776,23 +776,22 @@ def near_callback(args, geom1, geom2):
 	This function checks if the given geoms do collide and creates contact
 	joints if they do.
 	"""
+	if not (areConnected(geom1.getBody(), \
+		geom2.getBody())):
 
-	if (areConnected(geom1.getBody(), geom2.getBody())):
-		return
+		# check if the objects collide
+		contacts = collide(geom1, geom2)
 
-	# check if the objects collide
-	contacts = collide(geom1, geom2)
-
-	# create contact joints
-	world, contactgroup = args
-	for c in contacts:
-		c.setBounce(0.2)
-		c.setMu(500) # 0-5 = very slippery, 
-		#50-500 = normal, 5000 = very sticky
-		
-		j = ContactJoint(world, contactgroup, c)
-		
-		j.attach(geom1.getBody(), geom2.getBody())
+		# create contact joints
+		world, contactgroup = args
+		for c in contacts:
+			c.setBounce(0.2)
+			c.setMu(500) # 0-5 = very slippery, 
+			#50-500 = normal, 5000 = very sticky
+			
+			j = ContactJoint(world, contactgroup, c)
+			
+			j.attach(geom1.getBody(), geom2.getBody())
 
 def prepare_GL():
 	"""
@@ -807,23 +806,25 @@ def prepare_GL():
 	glEnable(GL_NORMALIZE)
 	glShadeModel(GL_SMOOTH)
 	glMatrixMode(GL_PROJECTION)
+	
 	glLoadIdentity()
 
-	gluPerspective (45.0, 1.3333, 0.2, 20.0)
-	glViewport(0, 0, 640, 480)
+	gluPerspective (45, 1.3333, 0.2, 20) # 45 grados?
+	glViewport(0, 0, 640, 480) # x,y, w,h
 
 	glMatrixMode(GL_MODELVIEW)
-	glLoadIdentity()
+	
+	glLoadIdentity() # por que se repite?
 
-	glLightfv(GL_LIGHT0,GL_POSITION,[0, 0, 1, 0])
-	glLightfv(GL_LIGHT0,GL_DIFFUSE,[1, 1, 1, 1])
-	glLightfv(GL_LIGHT0,GL_SPECULAR,[1, 1, 1, 1])
+	glLightfv(GL_LIGHT0,GL_POSITION, [0, 0, 1, 0])
+	glLightfv(GL_LIGHT0,GL_DIFFUSE , [1, 1, 1, 1])
+	glLightfv(GL_LIGHT0,GL_SPECULAR, [1, 1, 1, 1])
+	
 	glEnable(GL_LIGHT0)
 	glEnable(GL_COLOR_MATERIAL)
 
 	glColor3f(0.8, 0.8, 0.8)
-	gluLookAt(1.5, 4.0, 3.0, 0.5, 1.0, 0.0, 0.0, 
-			  1.0, 0.0)
+	gluLookAt(1.5, 4, 3.0, 0.5, 1, 0, 0, 1, 0)
 
 # polygon resolution for capsule bodies
 CAPSULE_SLICES = 16
@@ -839,11 +840,11 @@ def draw_body(body):
 	glMultMatrixd(rot)
 	
 	if body.shape == "capsule":
-		cylHalfHeight = body.length / 2.0
+		cylHalfHeight = body.length / 2
 		glBegin(GL_QUAD_STRIP)
 		
 		for i in range(CAPSULE_SLICES + 1):
-			angle = i / float(CAPSULE_SLICES) * 2.0 \
+			angle = i / float(CAPSULE_SLICES) * 2 \
 								* pi
 			ca = cos(angle)
 			sa = sin(angle)
@@ -859,7 +860,7 @@ def draw_body(body):
 		glTranslated(0, 0, cylHalfHeight)
 		glutSolidSphere(body.radius, \
 			CAPSULE_SLICES, CAPSULE_STACKS)
-		glTranslated(0, 0, -2.0 * cylHalfHeight)
+		glTranslated(0, 0, -2 * cylHalfHeight)
 		glutSolidSphere(body.radius, \
 			CAPSULE_SLICES, CAPSULE_STACKS)
 	
@@ -877,7 +878,7 @@ def onKey(c, x, y):
 	# -1 < int(c) < 10 puede dar error de conversion
 		SloMo = 4 * int(c) + 1
 	elif c == 'p': # pause/unpause simulation
-		Paused = not Paused
+		Paused = not Paused # no vale !Paused
 	elif c == 'q': # quit
 		exit(0)
 
@@ -907,77 +908,54 @@ def onIdle():
 	"""
 	global Paused, lasttime, numiter
 
-	if Paused:
-		return
+	if not Paused:
+		t = dt - time() - lasttime
 
-	t = dt - time() - lasttime
-	# por que influye parentesis? reduce rendimiento
-	
-	#if t > 0:
-		#sleep(t) 
-		# cuidado puede dormir el programa en 
-		# vez del hilo
+		glutPostRedisplay()
 
-	glutPostRedisplay()
+		for pasoPorFotograma in range(stepsPerFrame):
+			'''
+			 Detect collisions and create contact 
+			 joints
+			'''
+			space.collide((world, contactgroup), \
+				near_callback)
 
-	for pasoPorFotograma in range(stepsPerFrame):
-		# Detect collisions and create contact 
-		# joints
-		space.collide((world, contactgroup), \
-			near_callback)
-
-		# Simulation step (with slo motion)
-		world.step(dt / stepsPerFrame / SloMo)
-
-		#numiter += 1 # numiter = pasoPorFotograma
-
-		# apply internal ragdoll forces
-		ragdoll.update()
-
-		# Remove all contact joints
-		contactgroup.empty()
+			world.step(dt / stepsPerFrame / SloMo) # Simulation step (with slo motion)
+			ragdoll.update() # apply internal ragdoll forces
+			contactgroup.empty() # Remove all contact joints
 
 	lasttime = time()
 
-# initialize GLUT
-glutInit([])
-glutInitDisplayMode(GLUT_RGB + GLUT_DEPTH + \
-						 	   GLUT_DOUBLE)
-
-# create the program window
-x,y = 0,0
-width,height = 640,480
-
-glutInitWindowPosition(x, y);
-glutInitWindowSize(width, height);
-glutCreateWindow("PyODE Ragdoll Simulation")
-
-# create an ODE world object
-world = World()
-world.setGravity((0.0, -981/100, 0.0))
-world.setERP(1/10)
-world.setCFM(1E-4)
-
-# create an ODE space object
-space = Space()
-
-# create a plane geom to simulate a floor
-floor = GeomPlane(space, (0, 1, 0), 0)
-
+'''
 # create a list to store any ODE bodies which 
 # are not part of the ragdoll (this
-#   is needed to avoid Python garbage collecting 
+# is needed to avoid Python garbage collecting 
 # these bodies)
-bodies = [] # tmb podrian ser del ragdoll
-
+'''
+bodies 		= [] # tmb podrian ser del ragdoll
+g     		= (0, -10, 0)
+normalPlano = (0, 1, 0)
+# create the program window
+cx, cy = 0, 0
+w, h = 640, 480 # escala 
+'''
 # create a joint group for the contact joints 
 # generated during collisions
 #   between two bodies collide
+'''
 contactgroup = JointGroup()
+space 		 = Space() 
+floor 		 = GeomPlane(space, normalPlano, 0)
+world 		 = World() 
+
+world.setGravity(g)
+world.setERP(1/10)
+world.setCFM(1E-4)
 
 # set the initial simulation loop parameters
 fps = 60
-dt = 1.0 / fps
+dt  = 1.0 / fps # frecuencia de refresco 1/60 Hz
 stepsPerFrame = 2
 SloMo = 5 #1 empieza en camara lenta mas rendimiento
 Paused = False
@@ -986,22 +964,27 @@ numiter = 0 # ?
 
 # create the ragdoll
 ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0)) # si 9/10 empieza de pie pisando sobre el suelo
-print ("total mass is %.1f kg" % ragdoll.totalMass)
 
 # create an obstacle
-obstacle, obsgeom = createCapsule(world, space, 1000, 0.05, 0.15)
+obstacle, obsgeom = createCapsule(world, space, \
+								1000, 0.05, 0.15)
 pos = (uniform(-0.3, 0.3), 0.2, uniform(-0.15, 0.2))
-#pos = (0.27396178783269359, 0.20000000000000001, 0.17531818795388002)
-# pos obstaculo fija
+
 obstacle.setPosition(pos)
 obstacle.setRotation(rightRot)
+
 bodies.append(obstacle)
-print ("obstacle created at %s" % (str(pos)))
 
-# set GLUT callbacks
+glutInit([])
+glutInitDisplayMode(GLUT_RGB + GLUT_DEPTH + \
+						 	   GLUT_DOUBLE)
+glutInitWindowPosition(cx, cy);
+glutInitWindowSize	  (w, h);
+glutCreateWindow	  ("")
 glutKeyboardFunc(onKey)
-glutDisplayFunc(onDraw)
-glutIdleFunc(onIdle)
+glutDisplayFunc (onDraw)
+glutIdleFunc    (onIdle)
+glutMainLoop() 
 
-# enter the GLUT event loop
-glutMainLoop()
+print("obstacle created at %s" % (str(pos)),
+	  "total mass is %.1f kg"  % ragdoll.totalMass)
