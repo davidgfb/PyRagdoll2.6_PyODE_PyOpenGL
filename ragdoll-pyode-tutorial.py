@@ -151,14 +151,14 @@ def acosdot3(a, b):
 		valor = 0.0
 	"""
 	x = dot3(a, b)
-	valor = 0.0 # x > 1.0 (1,inf)
+	valor = acos(x) # -1.0 <= x <= 1.0 [-1, 1]
 
 	if x < -1.0: # (-inf, -1)
 		valor = pi
 
-	elif -1.0 <= x <= 1.0: # [-1, 1]
-		valor = acos(x)
-		
+	elif x > 1.0: # (1,inf)
+		valor = 0.0
+
 	return valor
 
 def rotate3(m, v):
