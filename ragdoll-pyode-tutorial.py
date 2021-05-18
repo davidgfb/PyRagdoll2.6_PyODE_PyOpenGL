@@ -920,14 +920,16 @@ def onIdle():
 
 	glutPostRedisplay()
 
-	for i in range(stepsPerFrame):
-		# Detect collisions and create contact joints
-		space.collide((world, contactgroup), near_callback)
+	for pasoPorFotograma in range(stepsPerFrame):
+		# Detect collisions and create contact 
+		# joints
+		space.collide((world, contactgroup), \
+			near_callback)
 
 		# Simulation step (with slo motion)
 		world.step(dt / stepsPerFrame / SloMo)
 
-		numiter += 1
+		#numiter += 1 # numiter = pasoPorFotograma
 
 		# apply internal ragdoll forces
 		ragdoll.update()
@@ -939,21 +941,21 @@ def onIdle():
 
 # initialize GLUT
 glutInit([])
-glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE)
+glutInitDisplayMode(GLUT_RGB + GLUT_DEPTH + \
+						 	   GLUT_DOUBLE)
 
 # create the program window
-x = 0
-y = 0
-width = 640
-height = 480
+x,y = 0,0
+width,height = 640,480
+
 glutInitWindowPosition(x, y);
 glutInitWindowSize(width, height);
 glutCreateWindow("PyODE Ragdoll Simulation")
 
 # create an ODE world object
 world = World()
-world.setGravity((0.0, -9.81, 0.0))
-world.setERP(0.1)
+world.setGravity((0.0, -981/100, 0.0))
+world.setERP(1/10)
 world.setCFM(1E-4)
 
 # create an ODE space object
@@ -962,11 +964,14 @@ space = Space()
 # create a plane geom to simulate a floor
 floor = GeomPlane(space, (0, 1, 0), 0)
 
-# create a list to store any ODE bodies which are not part of the ragdoll (this
-#   is needed to avoid Python garbage collecting these bodies)
-bodies = []
+# create a list to store any ODE bodies which 
+# are not part of the ragdoll (this
+#   is needed to avoid Python garbage collecting 
+# these bodies)
+bodies = [] # tmb podrian ser del ragdoll
 
-# create a joint group for the contact joints generated during collisions
+# create a joint group for the contact joints 
+# generated during collisions
 #   between two bodies collide
 contactgroup = JointGroup()
 
@@ -974,24 +979,24 @@ contactgroup = JointGroup()
 fps = 60
 dt = 1.0 / fps
 stepsPerFrame = 2
-SloMo = 37 #1 empieza en camara lenta mas rendimiento
+SloMo = 5 #1 empieza en camara lenta mas rendimiento
 Paused = False
 lasttime = time()
-numiter = 0
+numiter = 0 # ?
 
 # create the ragdoll
-ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0))
-print "total mass is %.1f kg (%.1f lbs)" % (ragdoll.totalMass,
-	ragdoll.totalMass * 2.2)
+ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0)) # si 9/10 empieza de pie pisando sobre el suelo
+print ("total mass is %.1f kg" % ragdoll.totalMass)
 
 # create an obstacle
 obstacle, obsgeom = createCapsule(world, space, 1000, 0.05, 0.15)
 pos = (uniform(-0.3, 0.3), 0.2, uniform(-0.15, 0.2))
 #pos = (0.27396178783269359, 0.20000000000000001, 0.17531818795388002)
+# pos obstaculo fija
 obstacle.setPosition(pos)
 obstacle.setRotation(rightRot)
 bodies.append(obstacle)
-print "obstacle created at %s" % (str(pos))
+print ("obstacle created at %s" % (str(pos)))
 
 # set GLUT callbacks
 glutKeyboardFunc(onKey)
@@ -1000,4 +1005,3 @@ glutIdleFunc(onIdle)
 
 # enter the GLUT event loop
 glutMainLoop()
-
