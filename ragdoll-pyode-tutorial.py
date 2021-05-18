@@ -1,8 +1,27 @@
-import sys, os, random, time
-from math import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
-from OpenGL.GLUT import *
+from time import time,sleep
+from random import uniform
+from sys import exit
+from math import pi,sqrt,acos,cos,sin
+
+from OpenGL.GL import glClearColor,glClear,\
+GL_COLOR_BUFFER_BIT,GL_DEPTH_BUFFER_BIT,glEnable,\
+GL_DEPTH_TEST,GL_LIGHTING,GL_NORMALIZE,glShadeModel,\
+GL_SMOOTH,glMatrixMode,GL_PROJECTION,glLoadIdentity,\
+glViewport,GL_MODELVIEW,glLightfv,GL_LIGHT0,\
+GL_POSITION,GL_DIFFUSE,GL_SPECULAR,GL_COLOR_MATERIAL,\
+glColor3f,glPushMatrix,glMultMatrixd,glBegin,\
+GL_QUAD_STRIP,glNormal3f,glVertex3f,glEnd,\
+glTranslated,glPopMatrix
+
+from OpenGL.GLU import gluPerspective,gluLookAt
+
+from OpenGL.GLUT import glutInit,glutInitDisplayMode,\
+GLUT_RGB,GLUT_DEPTH,GLUT_DOUBLE,\
+glutInitWindowPosition,glutInitWindowSize,\
+glutCreateWindow,glutKeyboardFunc,glutDisplayFunc,\
+glutIdleFunc,glutMainLoop,glutPostRedisplay,\
+glutSolidSphere,glutSwapBuffers
+
 from ode import Infinity,World,Space,GeomPlane,\
 JointGroup,Body,Mass,GeomCCylinder,FixedJoint,\
 BallJoint,UniversalJoint,ParamLoStop,ParamHiStop,\
@@ -607,7 +626,7 @@ def onKey(c, x, y):
 		Paused = not Paused
 	# quit
 	elif c == 'q' or c == 'Q':
-		sys.exit(0)
+		exit(0)
 
 
 def onDraw():
@@ -631,9 +650,9 @@ def onIdle():
 	if Paused:
 		return
 
-	t = dt - (time.time() - lasttime)
+	t = dt - (time() - lasttime)
 	if (t > 0):
-		time.sleep(t)
+		sleep(t)
 
 	glutPostRedisplay()
 
@@ -652,7 +671,7 @@ def onIdle():
 		# Remove all contact joints
 		contactgroup.empty()
 
-	lasttime = time.time()
+	lasttime = time()
 
 # initialize GLUT
 glutInit([])
@@ -693,7 +712,7 @@ dt = 1.0 / fps
 stepsPerFrame = 2
 SloMo = 1
 Paused = False
-lasttime = time.time()
+lasttime = time()
 numiter = 0
 
 # create the ragdoll
@@ -703,7 +722,7 @@ print "total mass is %.1f kg (%.1f lbs)" % (ragdoll.totalMass,
 
 # create an obstacle
 obstacle, obsgeom = createCapsule(world, space, 1000, 0.05, 0.15)
-pos = (random.uniform(-0.3, 0.3), 0.2, random.uniform(-0.15, 0.2))
+pos = (uniform(-0.3, 0.3), 0.2, uniform(-0.15, 0.2))
 #pos = (0.27396178783269359, 0.20000000000000001, 0.17531818795388002)
 obstacle.setPosition(pos)
 obstacle.setRotation(rightRot)
