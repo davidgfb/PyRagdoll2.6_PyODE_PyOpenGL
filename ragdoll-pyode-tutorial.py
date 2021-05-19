@@ -864,19 +864,6 @@ def onKey(c, x, y):
 	except:
 		pass
 
-'''
-def renderScene():
-	global y
-	
-	y         += 0.005
-	cx, cy, cz = (x, y, z - 1)
-	ax, ay, az = (0, 1, 0)
-
-	glClear(16640)
-	glLoadIdentity()
-	gluLookAt(x,y,z, cx,cy,cz, ax,ay,az)		   
-	glutSwapBuffers()
-'''
 arriba = (0, 1, 0)
 ceros = (0, 0, 0)
 #x, y, z = arriba
