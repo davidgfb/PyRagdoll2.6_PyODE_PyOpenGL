@@ -11,7 +11,9 @@ glViewport,GL_MODELVIEW,glLightfv,GL_LIGHT0,\
 GL_POSITION,GL_DIFFUSE,GL_SPECULAR,GL_COLOR_MATERIAL,\
 glColor3f,glPushMatrix,glMultMatrixd,glBegin,\
 GL_QUAD_STRIP,glNormal3f,glVertex3f,glEnd,\
-glTranslated,glPopMatrix
+glTranslated,glPopMatrix,\
+\
+glRotatef,glFlush
 
 from OpenGL.GLU import gluPerspective,gluLookAt
 
@@ -20,7 +22,9 @@ GLUT_RGB,GLUT_DEPTH,GLUT_DOUBLE,\
 glutInitWindowPosition,glutInitWindowSize,\
 glutCreateWindow,glutKeyboardFunc,glutDisplayFunc,\
 glutIdleFunc,glutMainLoop,glutPostRedisplay,\
-glutSolidSphere,glutSwapBuffers
+glutSolidSphere,glutSwapBuffers,\
+\
+glutMouseFunc,glutPassiveMotionFunc
 
 from ode import Infinity,World,Space,GeomPlane,\
 JointGroup,Body,Mass,GeomCCylinder,FixedJoint,\
@@ -409,7 +413,7 @@ R_TOES_POS = add3(R_ANKLE_POS, (0.0, 0.0, FOOT_LEN))
 L_TOES_POS = add3(L_ANKLE_POS, (0.0, 0.0, FOOT_LEN))
 
 
-class RagDoll():
+class Ragdoll():
 	def __init__(self, world, space, density, \
 						offset = (0.0, 0.0, 0.0)):
 		"""
@@ -793,49 +797,18 @@ def near_callback(args, geom1, geom2):
 			
 			j.attach(geom1.getBody(), geom2.getBody())
 
-def prepare_GL():
-	"""
-	Setup basic OpenGL rendering with smooth 
-	shading and a single light.
-	"""
-	glClearColor(0.8, 0.8, 0.9, 0.0)
 
-	glClear(GL_COLOR_BUFFER_BIT + GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST)
-	glEnable(GL_LIGHTING)
-	glEnable(GL_NORMALIZE)
-	glShadeModel(GL_SMOOTH)
-	glMatrixMode(GL_PROJECTION)
-	
-	glLoadIdentity()
 
-	gluPerspective (45, 1.3333, 0.2, 20) # 45 grados?
-	glViewport(0, 0, 640, 480) # x,y, w,h
-
-	glMatrixMode(GL_MODELVIEW)
-	
-	glLoadIdentity() # por que se repite?
-
-	glLightfv(GL_LIGHT0,GL_POSITION, [0, 0, 1, 0])
-	glLightfv(GL_LIGHT0,GL_DIFFUSE , [1, 1, 1, 1])
-	glLightfv(GL_LIGHT0,GL_SPECULAR, [1, 1, 1, 1])
-	
-	glEnable(GL_LIGHT0)
-	glEnable(GL_COLOR_MATERIAL)
-
-	glColor3f(0.8, 0.8, 0.8)
-	gluLookAt(1.5, 4, 3.0, 0.5, 1, 0, 0, 1, 0)
-
-# polygon resolution for capsule bodies
-CAPSULE_SLICES = 16
-CAPSULE_STACKS = 12
+cuatroUnos = (1, 1, 1, 1)
+CAPSULE_SLICES, CAPSULE_STACKS = 16, 12
 
 def draw_body(body):
 	"""
 	Draw an ODE body.
 	"""
 	rot = makeOpenGLMatrix(body.getRotation(), \
-		body.getPosition())
+						   body.getPosition())
+	
 	glPushMatrix()
 	glMultMatrixd(rot)
 	
@@ -860,6 +833,7 @@ def draw_body(body):
 		glTranslated(0, 0, cylHalfHeight)
 		glutSolidSphere(body.radius, \
 			CAPSULE_SLICES, CAPSULE_STACKS)
+		
 		glTranslated(0, 0, -2 * cylHalfHeight)
 		glutSolidSphere(body.radius, \
 			CAPSULE_SLICES, CAPSULE_STACKS)
@@ -872,17 +846,47 @@ def onKey(c, x, y):
 	"""
 	global SloMo, Paused
 
-	c = c.lower()
+	try:
+		c = int(c)
+		if -1 < c < 10:
+			SloMo = 4 * c + 1 # congelamos tras golpe y retomamos
 
-	if c >= '0' and c <= '9': # set simulation speed
-	# -1 < int(c) < 10 puede dar error de conversion
-		SloMo = 4 * int(c) + 1
-	elif c == 'p': # pause/unpause simulation
-		Paused = not Paused # no vale !Paused
-	elif c == 'q': # quit
-		exit(0)
+	except:
+		pass
+
+	try:
+		c = c.lower()
+		if   c == 'p': # pause/unpause simulation
+			Paused = not Paused # no vale !Paused
+		elif c == 'q': # quit
+			exit(0)
+
+	except:
+		pass
+
+'''
+def renderScene():
+	global y
+	
+	y         += 0.005
+	cx, cy, cz = (x, y, z - 1)
+	ax, ay, az = (0, 1, 0)
+
+	glClear(16640)
+	glLoadIdentity()
+	gluLookAt(x,y,z, cx,cy,cz, ax,ay,az)		   
+	glutSwapBuffers()
+'''
+arriba = (0, 1, 0)
+ceros = (0, 0, 0)
+#x, y, z = arriba
+x,y,z=(1.5, 4, 3)
+cx, cy, cz = ceros
+ax, ay, az = arriba
 
 def onDraw():
+	global y
+	y += 0.005
 	"""
 	GLUT render callback.
 	no sirve 
@@ -890,8 +894,43 @@ def onDraw():
 	ni
 	cuerpos = [bodies]
 	cuerpos.append(ragdoll.bodies)
+	
+	Setup basic OpenGL rendering with smooth 
+	shading and a single light.
 	"""
-	prepare_GL()
+	glClearColor(0.8, 0.8, 0.9, 0.0)
+
+	glClear     (GL_COLOR_BUFFER_BIT + \
+		         GL_DEPTH_BUFFER_BIT)
+	
+	glEnable    (GL_DEPTH_TEST)
+	glEnable    (GL_LIGHTING)
+	glEnable    (GL_NORMALIZE)
+	
+	glShadeModel(GL_SMOOTH)
+	glMatrixMode(GL_PROJECTION)
+	
+	glLoadIdentity()
+
+	# camara
+	gluPerspective(45, 1.3333, 0.2, 20) # 45 grados?
+	glViewport(0, 0, 640, 480) # x,y, w,h
+
+	glMatrixMode(GL_MODELVIEW)
+	
+	glLoadIdentity() # por que se repite?
+
+	glLightfv(GL_LIGHT0, GL_POSITION, [0, 0, 1, 0])
+	glLightfv(GL_LIGHT0, GL_DIFFUSE , cuatroUnos)
+	glLightfv(GL_LIGHT0, GL_SPECULAR, cuatroUnos)
+	
+	glEnable(GL_LIGHT0)
+	glEnable(GL_COLOR_MATERIAL)
+
+	valor = 0.8
+	glColor3f(valor, valor, valor) #mul3(unos, 0.8) y despieza
+	#gluLookAt(1.5, 4, 3, 0.5, 1, 0, 0, 1, 0)
+	gluLookAt(x,y,z, cx,cy,cz, ax,ay,az)
 
 	cuerpos = bodies + ragdoll.bodies
 
@@ -901,12 +940,37 @@ def onDraw():
 
 	glutSwapBuffers()
 
+
 def onIdle():
 	"""
 	GLUT idle processing callback, 
 	performs ODE simulation step.
 	"""
 	global Paused, lasttime, numiter
+
+	# mejor que look at
+	#anguloY = 90
+	#glRotatef	(-anguloY	, 0			 , 1		  , 0)
+
+	#glRotatef	(-yAngle	, 0			 , 1		  , 0)
+	#glRotatef	(-xAngle	, 1			 , 0		  , 0)
+	#glTranslatef(-position.x, -position.y, -position.z)
+	'''
+	# glu perspective
+	# camara
+
+	#x ,  y,  z = (1.5, 4, 3)
+	x ,  y,  z = (0  , 0, 0)
+	cx, cy, cz = (0.5, 1, 0)
+	aX, aY, aZ = (0  , 1, 0)
+
+	#glutDestroyWindow(glutGetWindow())
+
+	gluLookAt(x,y,z, cx,cy,cz, aX,aY,aZ)
+	#gluLookAt(1.5, 4, 3.0, 0.5, 1, 0, 0, 1, 0)
+	#changeSize(1000, 1000); #glut
+	#gluPerspective(90, 1.3333, 0.2, 20) # cambia fov a 90
+	'''
 
 	if not Paused:
 		t = dt - time() - lasttime
@@ -927,43 +991,66 @@ def onIdle():
 
 	lasttime = time()
 
-'''
-# create a list to store any ODE bodies which 
-# are not part of the ragdoll (this
-# is needed to avoid Python garbage collecting 
-# these bodies)
-'''
+def onMouseClick(boton,estado, x,y):
+	print("has hecho click")
+
+def normaliza_Angulo(x, y): # x E [0, 360], y E [-90, 90] # raton
+		minX, max_X =   0, 360
+		minY, maxY  = -90,  90 # minY = -maxY
+
+		if  x  <  minX: 
+			x += max_X
+ 
+		elif x > max_X:
+			x -= max_X
+
+		if  y < minY:
+			y = minY
+ 
+		elif y > maxY:
+			y = maxY 
+
+		return x,y
+
+def onMouseMove(x,y):
+	#print("x = " + str(x) + ", y = " + str(y))
+	anguloX, anguloY = normaliza_Angulo(x,y)
+	#print("anguloX = " + str(anguloX) + ", anguloY = " + str(anguloY))
+
+	glRotatef	(-anguloY	, 0			 , 1		  , 0)
+	glRotatef	(-anguloX	, 1			 , 0		  , 0)
+	#glTranslatef(-position.x, -position.y, -position.z)
+	glFlush()
+
+unos = (1, 1, 1)
+#ceros  = (0, 0, 0)
+arriba = normalPlano = (0, 1, 0)
+abajo  = mul3(arriba, -1)
+
 bodies 		= [] # tmb podrian ser del ragdoll
-g     		= (0, -10, 0)
-normalPlano = (0, 1, 0)
-# create the program window
+g     		= mul3(abajo, 10)
 cx, cy = 0, 0
-w, h = 640, 480 # escala 
-'''
-# create a joint group for the contact joints 
-# generated during collisions
-#   between two bodies collide
-'''
+w , h  = 640, 480 # escala 
+
 contactgroup = JointGroup()
 space 		 = Space() 
 floor 		 = GeomPlane(space, normalPlano, 0)
 world 		 = World() 
 
 world.setGravity(g)
-world.setERP(1/10)
+world.setERP(0.1)
 world.setCFM(1E-4)
 
 # set the initial simulation loop parameters
 fps = 60
-dt  = 1.0 / fps # frecuencia de refresco 1/60 Hz
+dt  = fps ** -1 # frecuencia de refresco 1/60 Hz
 stepsPerFrame = 2
 SloMo = 5 #1 empieza en camara lenta mas rendimiento
 Paused = False
 lasttime = time()
 numiter = 0 # ?
 
-# create the ragdoll
-ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0)) # si 9/10 empieza de pie pisando sobre el suelo
+ragdoll = Ragdoll(world, space, 500, (0.0, 0.9, 0.0)) # si 9/10 empieza de pie pisando sobre el suelo
 
 # create an obstacle
 obstacle, obsgeom = createCapsule(world, space, \
@@ -982,6 +1069,8 @@ glutInitWindowPosition(cx, cy);
 glutInitWindowSize	  (w, h);
 glutCreateWindow	  ("")
 glutKeyboardFunc(onKey)
+glutMouseFunc   (onMouseClick)
+glutPassiveMotionFunc(onMouseMove)
 glutDisplayFunc (onDraw)
 glutIdleFunc    (onIdle)
 glutMainLoop() 
