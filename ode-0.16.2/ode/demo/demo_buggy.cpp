@@ -25,32 +25,39 @@ static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, env
 static dSpaceID space, car_space;
 static dBodyID body[4];
 
-static dJointID joint[3];	// joint[0] is the front wheel
+static dJointID joint[3]; // array3d de dJointIDs
+
 static dJointGroupID contactgroup;
 
 static dGeomID ground, box[1], sphere[3], ground_box;
 
 static dReal speed = 0, steer = 0; // things that the user controls // user commands
 
+dJointID getJuntaRuedaDelantera() {
+	return joint[0];
+}
+
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	/*
-	// this is called by dSpaceCollide when two objects in space are
-	// potentially colliding.
-	*/
+	  /*
+	  // this is called by dSpaceCollide when two objects in space are
+	  // potentially colliding.
+	  */
 	  int i = 0, n = 0;
 
-	  bool g1 = o1 == ground || o1 == ground_box; 	  // only collide things with the ground
-	  bool g2 = o2 == ground || o2 == ground_box;
+	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
+	  bool g2 = (o2 == ground || o2 == ground_box);
 	  
 	  if (g1 ^ g2) {
 		  const int N = 10;
 		  dContact contact[N];
 		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
 		  
+		  int sumaContactos = dContactSlip1   + dContactSlip2   +
+				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
+		  
 		  if (n > 0) {
 			    for (i = 0; i < n; i++) {
-			      contact[i].surface.mode = dContactSlip1   + dContactSlip2   +
-				                        dContactSoftERP + dContactSoftCFM + dContactApprox1;
+			      contact[i].surface.mode = sumaContactos;
 			      
 			      contact[i].surface.mu = dInfinity;
 			      
@@ -59,7 +66,7 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 			      contact[i].surface.soft_erp = 0.5;
 			      contact[i].surface.soft_cfm = 0.3;
 			      
-			      dJointID c = dJointCreateContact (world,contactgroup,&contact[i]);
+			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
 			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
 					       dGeomGetBody(contact[i].geom.g2));
 			    }
@@ -70,33 +77,55 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 static void start() { // start simulation - set viewpoint
 	  dAllocateODEDataForThread(dAllocateMaskAll);
 
-	  static float xyz[3] = {0.8317, -0.9817, 0.8}, 
-	               hpr[3] = { 121.0,   -27.5, 0.0};
+	  static float pos[3] = {    1,      -1,   1}, // array3d de floats 
+	               rot[3] = {121.0,   -27.5, 0.0};
 	  
-	  dsSetViewpoint (xyz,hpr);
+	  //camara
+	  dsSetViewpoint (pos, rot);
 	  printf ("Press:\t'a' to increase speed.\n"
 		  	"\t'z' to decrease speed.\n"
 			"\t',' to steer left.\n"
 			"\t'.' to steer right.\n"
-			"\t' ' to reset speed and steering.\n"
-			"\t'1' to save the current state to 'state.dif'.\n");
+			"\t' ' to reset speed and steering.\n");
 }
 
+/*
+bool estaGirandoCoche() {
+	return 
+}
+*/
+
+bool estaConduciendoCoche = false;
+
 static void command (int cmd) { // called when a key pressed 
-	if (cmd == 'w' || cmd == 'W') { // lower // flechas 
-		speed += 0.3;
+	if (cmd == 'w' || cmd == 'W') { // lower // flechas //acelerador
+		if (speed == 0) { // si esta parado en neutral mete directa y empieza a rodar // puede estar rodando en neutral...
+			speed = 0.03; // hacia delante
+		} else {
+			if (speed < 0 || speed > 0) { // si esta en marcha atras o en directa acelera
+				speed *= 1.3; // +-30%
+			} 
+		}
 	}
 	
-	if (cmd == 'a' || cmd == 'A') {
+	///*
+	//if (cmd == 'a' || cmd == 'A' || cmd == 'd' || cmd == 'D') {
+	estaConduciendoCoche = true;
+		//steer = 0;
+	//} 
+	//*/
+	
+	if (cmd == 'a' || cmd == 'A') { //freno
 		if (steer > -1.0) {
 	    		steer -= 0.5;
     		}
     	
     		//printf("%.6f\n", steer);
 	}
-	
+		
 	if (cmd == 's' || cmd == 'S') {
-		speed -= 0.3;
+		//speed -= 0.3;
+		//speed *= -1.0;
 	}
 	
 	if (cmd == 'd' || cmd == 'D') {
@@ -113,17 +142,32 @@ static void command (int cmd) { // called when a key pressed
   	}
 }
 
+int ciclosEspera = 100;
+int cicloActual = 0;
+
 static void simLoop (int pause) { // simulation loop
    	int i = 0;
 	float vMax = 0.1;
-  
+	
+	/////// funcion retardada corrige direccion /////////
+	if (cicloActual == ciclosEspera) {	// cicloActual % ciclosEspera == 0 and cicloActual != 0 (0/5=0 r=0)
+		if (estaConduciendoCoche) { //coche.estaGirando()
+			estaConduciendoCoche = false;
+		} else { //no esta girando 
+			steer = 0;
+		}
+		
+		cicloActual = 0;
+	} else {
+		cicloActual++;
+	}
+	/////////////////////////////////////////////////
+	  
     	if (!pause) {
-         	// motor joint[0] rueda/s delantera
-         	dJointSetHinge2Param (joint[0],  dParamVel2, -speed);
-         	dJointSetHinge2Param (joint[0], dParamFMax2,    0.1);
+         	dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
+         	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);
 
-    	 	// steering
-    	 	dReal v = steer - dJointGetHinge2Angle1 (joint[0]);
+    	 	dReal v = steer - dJointGetHinge2Angle1 (getJuntaRuedaDelantera()); // steering
     
     	 	if (v > vMax) {
     		 	v = vMax;
@@ -135,11 +179,11 @@ static void simLoop (int pause) { // simulation loop
     
     	 	v *= 10.0;
     	 	
-    	 	dJointSetHinge2Param (joint[0],         dParamVel,     v);
-    	 	dJointSetHinge2Param (joint[0],        dParamFMax,   0.2);
-    	 	dJointSetHinge2Param (joint[0],      dParamLoStop, -0.75);
-    	 	dJointSetHinge2Param (joint[0],      dParamHiStop,  0.75);
-    	 	dJointSetHinge2Param (joint[0], dParamFudgeFactor,   0.1);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFudgeFactor,   0.1);
 
     	 	dSpaceCollide (space,    0, &nearCallback);
     	 	dWorldStep    (world, 0.05);
