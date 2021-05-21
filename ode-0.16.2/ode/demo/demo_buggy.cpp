@@ -155,6 +155,76 @@ void pruebaMul3() {
 }
 */
 
+void div3(float v[3], float s) {
+	//Returns 3-vector v divided by scalar s.
+	v[0] /= s;
+	v[1] /= s;
+	v[2] /= s;
+}
+
+/*
+//PROBADOR
+void pruebaDiv3() {
+	float v[3] = {2, 2, 2};
+	
+	div3(v, 2);
+	
+	imprimeArray3(v);
+	
+	printf("debe ser 1.0, 1.0, 1.0\n"); 
+}
+*/
+
+float dist3(float a[3], float b[3]) {
+	//Returns the distance between point 3-vectors a and b.		
+	sub3(a, b);
+		
+	return len3(a);
+}
+
+/*
+//PROBADOR
+void pruebaDist3() {
+	float a[3] = {3, 3, 3}, 
+	      b[3] = {2, 2, 2};
+	      
+	printf("%f debe ser %f\n", dist3(a, b), sqrt(3));
+}
+*/
+
+void norm3(float v[3]) {
+	//Returns the unit length 3-vector parallel to 3-vector v.		
+	float l = len3(v); //modifica v
+	
+	if (l > 0.0) { //funcion bool
+		div3(v, l);
+	} else {
+		v[0] = 0.0;
+		v[1] = 0.0;
+		v[2] = 0.0;
+	}
+}
+
+/*
+//PROBADOR
+void pruebaNorm3() {
+	float a[3] = {1, 1, 1},
+	      b[3] = {2, 2, 2};
+	
+	norm3(a);
+	
+	imprimeArray3(a);
+	
+	printf("debe ser igual que ");
+	
+	norm3(b);
+	
+	imprimeArray3(b);
+	
+	printf("\n");
+}
+*/
+
 int main(int argc, char **argv) {
 	/*	
 	//PROBADORES	
@@ -164,10 +234,21 @@ int main(int argc, char **argv) {
 	prueba_Add3();	
 	pruebaImprimeArray3();	
 	pruebaSub3();		
-	pruebaMul3();
+	pruebaMul3();	
+	pruebaDiv3();	
+	pruebaDist3();	
+	pruebaNorm3();
 	*/
+	
 	return 0;
 }
+
+/*
+	float v1[3] = {0, 0, 0}; //copia de v necesario?
+	v1[0] = v[0];
+	v1[1] = v[1];
+	v1[2] = v[2];
+*/
 
 
 /*
