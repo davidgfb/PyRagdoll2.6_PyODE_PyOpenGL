@@ -17,7 +17,72 @@ this also shows you how to use geom groups.
 	#define dsDrawCapsule dsDrawCapsuleD
 #endif
 
-float LENGTH = 0.7, WIDTH = 0.5, HEIGHT = 0.2, RADIUS = 0.18, STARTZ = 0.5, CMASS = 1.0, WMASS = 0.2; // some constants
+float sign(float x) { //sentido bool
+	//Returns 1.0 if x is positive, -1.0 if x is negative or zero.
+	float valor = -1.0; // (x <= 0.0), x E (-inf, 0]
+	
+	if (x > 0.0) { // (0, inf)
+		valor = 1.0;
+	} 
+	
+	return valor;
+}
+
+float len3(float v[3]) { 
+	//Returns the length of 3-vector v.
+	float x = v[0], y = v[1], z = v[2];
+	
+	return sqrt(x * x + y * y + z * z);
+}
+
+//float neg3[3](float v[3]) {
+	//Returns the negation of 3-vector v.
+//	float x = v[0], y = v[1], z = v[2];
+	
+//	return {-x, -y, -z};
+//}
+
+void neg3(float v[3]) { //no devuelve nada haz una copia antes
+	for (int posicion = 0; posicion < 3; posicion++) {
+		v[posicion] *= -1.0; 
+	}
+}
+
+int main(int argc, char **argv) {
+	/*
+	//PROBADOR	
+	////// sign /////////
+	for (int i = -1; i < 2; i++) {
+		printf("%f, ", sign(i));
+	}
+	printf("debe ser -1, -1, 1\n");
+	/////////////////////	
+	//////// len3 //////////
+	for (int i = 0; i < 2; i++) {
+		float j = (float) i;
+		float v[3] = {j, j, j};
+		printf("%f debe ser %f\n", len3(v), sqrt(3 * i));
+	}
+	///////////////////////
+	/////// neg3 /////////
+	float v[3] = {1, 1, 1};
+	
+	neg3(v);
+	
+	for (int posicion = 0; posicion < 3; posicion++) {
+		printf("%f, ",v[posicion]);
+	}
+	printf("debe ser -1.0, -1.0, -1.0\n"); 
+	///////////////////////
+	*/
+	
+	
+	return 0;
+}
+
+
+/*
+float LENGTH = 1, WIDTH = 1, HEIGHT = 0, RADIUS = 0, STARTZ = 1, CMASS = 1, WMASS = 0.2; // some constants
 
 static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
 
@@ -38,10 +103,10 @@ dJointID getJuntaRuedaDelantera() {
 }
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  /*
+	  
 	  // this is called by dSpaceCollide when two objects in space are
 	  // potentially colliding.
-	  */
+	  
 	  int i = 0, n = 0;
 
 	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
@@ -248,6 +313,7 @@ static void simLoop (int pause) { // simulation loop
 
 
 int main (int argc, char **argv) {
+	/*
   	int i = 0;
   	
   	dMass m;
@@ -322,10 +388,10 @@ int main (int argc, char **argv) {
   	for (i = 1; i < 3; i++) {   	// lock back wheels along the steering axis
     		dJointSetHinge2Param (joint[i],dParamLoStop,0); //,dParamVel,0); // set stops to make sure wheels always stay in alignment
     		dJointSetHinge2Param (joint[i],dParamHiStop,0); // ,dParamFMax,dInfinity);
-    		/*
+    		
     		// the following alternative method is no good as the wheels may get out
     		// of alignment:
-    		*/
+    		
 	}
 
   	car_space = dSimpleSpaceCreate (space);   	// create car space and add it to the top level space
@@ -355,5 +421,9 @@ int main (int argc, char **argv) {
   	dWorldDestroy (world);
   	dCloseODE();
   	
+  	
+  	//printf("sqrt(2) = %f\n", sqrt(2));
+  	
   	return 0;
 }
+*/

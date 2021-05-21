@@ -1,25 +1,3 @@
-/*************************************************************************
- *                                                                       *
- * Open Dynamics Engine, Copyright (C) 2001,2002 Russell L. Smith.       *
- * All rights reserved.  Email: russ@q12.org   Web: www.q12.org          *
- *                                                                       *
- * This library is free software; you can redistribute it and/or         *
- * modify it under the terms of EITHER:                                  *
- *   (1) The GNU Lesser General Public License as published by the Free  *
- *       Software Foundation; either version 2.1 of the License, or (at  *
- *       your option) any later version. The text of the GNU Lesser      *
- *       General Public License is included with this library in the     *
- *       file LICENSE.TXT.                                               *
- *   (2) The BSD-style license that is included with this library in     *
- *       the file LICENSE-BSD.TXT.                                       *
- *                                                                       *
- * This library is distributed in the hope that it will be useful,       *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the files    *
- * LICENSE.TXT and LICENSE-BSD.TXT for more details.                     *
- *                                                                       *
- *************************************************************************/
-
 /*
   This demo shows how to use dContactMotionN in a lifting platform.
 */
@@ -217,7 +195,7 @@ static float hpr[3] = {150.f,-13.5000f,0.0000f};
 static void start()
 {
     //dAllocateODEDataForThread(dAllocateMaskAll);
-    dsSetViewpoint (xyz,hpr);
+    dsSetViewpoint (xyz, hpr);
     printf ("To drop another object, press:\n");
     printf ("   b for box.\n");
     printf ("   s for sphere.\n");
@@ -411,7 +389,7 @@ static void updatecam()
     xyz[0] = platpos[0] + 3.3;
     xyz[1] = platpos[1] - 1.8;
     xyz[2] = platpos[2] + 2;
-    dsSetViewpoint (xyz, hpr);
+    dsSetViewpoint (xyz, hpr); //ancla la camara (sigue) al sujeto 
 }
 
 static void simLoop (int pause)
