@@ -89,71 +89,110 @@ static void start() { // start simulation - set viewpoint
 			"\t' ' to reset speed and steering.\n");
 }
 
-/*
-bool estaGirandoCoche() {
-	return 
-}
-*/
-
 bool estaConduciendoCoche = false;
 
-static void command (int cmd) { // called when a key pressed 
-	if (cmd == 'w' || cmd == 'W') { // lower // flechas //acelerador
-		if (speed == 0) { // si esta parado en neutral mete directa y empieza a rodar // puede estar rodando en neutral...
-			speed = 0.03; // hacia delante
+float vAbs(float v) {
+	if (v < 0) {
+		v *= -1.0;
+	}
+	
+	return v;
+}
+
+float escalarV_R = 0.3; // velocidad a la que rueda > vMin
+
+bool estaParadoCoche(float v) { //[0]
+	bool estaParado = false;
+	
+	if (v == 0) {
+		estaParado = true;
+	} 
+	
+	return estaParado;
+}
+
+bool estaV_MinCoche(float v) { //vAnormalmenteReducida
+	bool estaV_Min = false;
+	
+	if (not estaParadoCoche(v) and vAbs(v) < escalarV_R) {
+		estaV_Min = true; //frena
+	}
+	
+	return estaV_Min;
+}
+
+bool estaRodandoCoche(float v) {
+	bool estaRodando = false;
+	
+	if (vAbs(v) == escalarV_R) { //[vR]
+		estaRodando = true;
+	}
+	
+	return estaRodando;
+}
+
+//parado = 0, vAnormalmenteReducida = (abs(+-(0)), abs(+-vR)) (frenara solo), rodando = abs(+-vR), en marcha = [abs(+-vR), abs(+-inf))
+
+static void command (int cmd) {  // lower 
+	estaConduciendoCoche = true;
+		
+	if (cmd == 'w' || cmd == 'W') { // flechas //acelerador
+		if (estaParadoCoche(speed)) { // si esta parado en parking mete directa y empieza a rodar // puede estar rodando en neutral...
+			speed = escalarV_R; // mete directa y rueda hacia delante [vR]
 		} else {
-			if (speed < 0 || speed > 0) { // si esta en marcha atras o en directa acelera
+			if (estaRodandoCoche(speed)) { // si esta en marcha atras o en directa acelera
 				speed *= 1.3; // +-30%
 			} 
 		}
 	}
+			
+	if (cmd == 's' || cmd == 'S') { //freno / marcha atras
+		if (estaParadoCoche(speed) || speed >= escalarV_R) { //directa +
+			speed -= escalarV_R; // mete y rueda marcha atras   //frena hacia atras		
+		} else {
+			if (speed <= -escalarV_R) { //marcha atras // -
+				speed += escalarV_R; //frena hacia delante
+			}
+		}		
+	}
 	
-	///*
-	//if (cmd == 'a' || cmd == 'A' || cmd == 'd' || cmd == 'D') {
-	estaConduciendoCoche = true;
-		//steer = 0;
-	//} 
-	//*/
+	if (cmd == ' ') { // espacio = freno de mano
+    		speed = 0; // bloquea las ruedas (el coche no tiene abs)
+  	}
 	
-	if (cmd == 'a' || cmd == 'A') { //freno
+	/////////// giro ///////////////
+	if (cmd == 'a' || cmd == 'A') { 
 		if (steer > -1.0) {
 	    		steer -= 0.5;
     		}
-    	
-    		//printf("%.6f\n", steer);
-	}
-		
-	if (cmd == 's' || cmd == 'S') {
-		//speed -= 0.3;
-		//speed *= -1.0;
 	}
 	
 	if (cmd == 'd' || cmd == 'D') {
 		if (steer < 1.0) {
     			steer += 0.5;
     		}
-    	
-    		//printf("%.6f\n", steer);
 	}
-	
-  	if (cmd == ' ') { // espacio = freno de mano
-    		speed = 0; //speed, steer = 0, 0; no funciona tampoco (0, 0)
-    		steer = 0;
-  	}
+	////////////////////////////////// 	
 }
 
-int ciclosEspera = 100;
-int cicloActual = 0;
+int ciclosEspera = 20, cicloActual = 0;
 
 static void simLoop (int pause) { // simulation loop
    	int i = 0;
 	float vMax = 0.1;
 	
-	/////// funcion retardada corrige direccion /////////
-	if (cicloActual == ciclosEspera) {	// cicloActual % ciclosEspera == 0 and cicloActual != 0 (0/5=0 r=0)
-		if (estaConduciendoCoche) { //coche.estaGirando()
+	/////////// freno automatico ///////////////
+	if (estaV_MinCoche(speed)) { //velocidad anormalmente reducida (0, vR)
+		//tiraFrenoMano() //echaFrenoMano()
+		speed = 0;
+	}
+	////////////////////////////////////////////
+	
+	/////// funcion retardada corrige direccion ///////// 
+	if (cicloActual > ciclosEspera) { // por si nos hemos saltado algun ciclo	
+		if (estaConduciendoCoche) { //jugador.estaConduciendo(coche)
 			estaConduciendoCoche = false;
-		} else { //no esta girando 
+		} else { //no esta conduciendo coche 
 			steer = 0;
 		}
 		
