@@ -225,6 +225,24 @@ void pruebaNorm3() {
 }
 */
 
+float dot3(float a[3], float b[3]) {
+	//Returns the dot product of 3-vectors a and b.
+	float xa = a[0], ya = a[1], za = a[2], 
+	      xb = b[0], yb = b[1], zb = b[2];
+	      
+	return xa * xb + ya * yb + za * zb;
+}
+
+/*
+//PROBADOR
+void pruebaDot3() {
+	float a[3] = {2, 2, 2},
+	      b[3] = {3, 3, 3};
+	      
+	printf("%f debe ser 18.0\n", dot3(a, b));
+}
+*/
+
 int main(int argc, char **argv) {
 	/*	
 	//PROBADORES	
@@ -237,9 +255,9 @@ int main(int argc, char **argv) {
 	pruebaMul3();	
 	pruebaDiv3();	
 	pruebaDist3();	
-	pruebaNorm3();
+	pruebaNorm3();	
+	pruebaDot3();
 	*/
-	
 	return 0;
 }
 
