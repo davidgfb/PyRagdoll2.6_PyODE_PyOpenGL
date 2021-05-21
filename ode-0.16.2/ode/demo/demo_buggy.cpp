@@ -74,7 +74,7 @@ void pruebaImprimeArray3() {
 */
 
 void neg3(float v[3]) { //no devuelve nada haz una copia antes
-	//Returns the negation of 3-vector v.
+	//the negation of 3-vector v.
 	for (int posicion = 0; posicion < 3; posicion++) {
 		v[posicion] *= -1.0; 
 	}
@@ -94,7 +94,7 @@ void pruebaNeg3() {
 */
 
 void add3(float a[3], float b[3]) { //modifica a haz una copia
-	//Returns the sum of 3-vectors a and b.
+	//the sum of 3-vectors a and b.
 	a[0] += b[0];
 	a[1] += b[1];
 	a[2] += b[2];
@@ -115,7 +115,7 @@ void prueba_Add3() {
 */
 
 void sub3(float a[3], float b[3]) { //modifica a haz una copia
-	//Returns the difference between 3-vectors a and b.
+	//the difference between 3-vectors a and b.
 	a[0] -= b[0];
 	a[1] -= b[1];
 	a[2] -= b[2];
@@ -136,7 +136,7 @@ void pruebaSub3() {
 */
 
 void mul3(float v[3], float s) { //haz una copia
-	//Returns 3-vector v multiplied by scalar s.
+	//3-vector v multiplied by scalar s.
 	v[0] *= s;
 	v[1] *= s;
 	v[2] *= s;
@@ -156,7 +156,7 @@ void pruebaMul3() {
 */
 
 void div3(float v[3], float s) {
-	//Returns 3-vector v divided by scalar s.
+	//3-vector v divided by scalar s.
 	v[0] /= s;
 	v[1] /= s;
 	v[2] /= s;
@@ -193,7 +193,7 @@ void pruebaDist3() {
 */
 
 void norm3(float v[3]) {
-	//Returns the unit length 3-vector parallel to 3-vector v.		
+	//the unit length 3-vector parallel to 3-vector v.		
 	float l = len3(v); //modifica v
 	
 	if (l > 0.0) { //funcion bool
@@ -243,6 +243,30 @@ void pruebaDot3() {
 }
 */
 
+void cross(float a[3], float b[3]) { //por que no va?
+	//the cross product of 3-vectors a and b.	
+	float xa = a[0], ya = a[1], za = a[2], 
+	      xb = b[0], yb = b[1], zb = b[2];
+	      
+	a[0] = ya * zb - yb * za;
+	a[1] = za * xb - zb * xa;
+	a[2] = xa * yb - xb * ya;
+}
+
+/*
+//PROBADOR
+void pruebaCross() {
+	float a[3] = {2, 2, 2},
+	      b[3] = {3, 3, 3};
+	  
+	cross(a, b);  
+	   
+	imprimeArray3(a);   
+	      
+	printf("debe ser 0.0, 0.0, 0.0\n");
+}
+*/
+
 int main(int argc, char **argv) {
 	/*	
 	//PROBADORES	
@@ -256,7 +280,8 @@ int main(int argc, char **argv) {
 	pruebaDiv3();	
 	pruebaDist3();	
 	pruebaNorm3();	
-	pruebaDot3();
+	pruebaDot3();	
+	pruebaCross();
 	*/
 	return 0;
 }
