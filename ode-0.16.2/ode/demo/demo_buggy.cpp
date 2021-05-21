@@ -35,16 +35,23 @@ float len3(float v[3]) {
 	return sqrt(x * x + y * y + z * z);
 }
 
-//float neg3[3](float v[3]) {
-	//Returns the negation of 3-vector v.
-//	float x = v[0], y = v[1], z = v[2];
-	
-//	return {-x, -y, -z};
-//}
-
 void neg3(float v[3]) { //no devuelve nada haz una copia antes
+	//Returns the negation of 3-vector v.
 	for (int posicion = 0; posicion < 3; posicion++) {
 		v[posicion] *= -1.0; 
+	}
+}
+
+void add3(float a[3], float b[3]) { //modifica a haz una copia
+	//Returns the sum of 3-vectors a and b.
+	a[0] += b[0];
+	a[1] += b[1];
+	a[2] += b[2];
+}
+
+void imprimeArray3(float v[3]) { //printf(array3.toString())
+	for (int posicion = 0; posicion < 3; posicion++) {
+		printf("%f, ",v[posicion]);
 	}
 }
 
@@ -69,13 +76,21 @@ int main(int argc, char **argv) {
 	
 	neg3(v);
 	
-	for (int posicion = 0; posicion < 3; posicion++) {
-		printf("%f, ",v[posicion]);
-	}
+	imprimeArray3(v);
+	
 	printf("debe ser -1.0, -1.0, -1.0\n"); 
 	///////////////////////
 	*/
+	//////// add3 /////////
+	float a[3] = {1, 1, 1}, 
+	      b[3] = {2, 2, 2};
+	      
+	add3(a,b);
+	      
+	imprimeArray3(a);  
 	
+	printf("debe ser 3.0, 3.0, 3.0\n");    
+	///////////////////////
 	
 	return 0;
 }
