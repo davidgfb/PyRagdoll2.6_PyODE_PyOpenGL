@@ -28,12 +28,50 @@ float sign(float x) { //sentido bool
 	return valor;
 }
 
+/*
+// PROBADOR 
+void pruebaSign() {
+	for (int i = -1; i < 2; i++) {
+		printf("%f, ", sign(i));
+	}
+	printf("debe ser -1, -1, 1\n");
+}
+*/
+
 float len3(float v[3]) { 
 	//Returns the length of 3-vector v.
 	float x = v[0], y = v[1], z = v[2];
 	
 	return sqrt(x * x + y * y + z * z);
 }
+
+/*
+// PROBADOR 
+void pruebaLen3() {
+	for (int i = 0; i < 2; i++) {
+		float j = (float) i;
+		float v[3] = {j, j, j};
+		printf("%f debe ser %f\n", len3(v), sqrt(3 * i));
+	}
+}
+*/
+
+void imprimeArray3(float v[3]) { //printf(array3.toString())
+	for (int posicion = 0; posicion < 3; posicion++) {
+		printf("%f, ",v[posicion]);
+	}
+}
+
+/*
+// PROBADOR 
+void pruebaImprimeArray3() {
+	float v[3] = {1, 1, 1};
+	
+	imprimeArray3(v);
+	
+	printf("debe ser 1.0, 1.0, 1.0\n"); 
+}
+*/
 
 void neg3(float v[3]) { //no devuelve nada haz una copia antes
 	//Returns the negation of 3-vector v.
@@ -42,36 +80,9 @@ void neg3(float v[3]) { //no devuelve nada haz una copia antes
 	}
 }
 
-void add3(float a[3], float b[3]) { //modifica a haz una copia
-	//Returns the sum of 3-vectors a and b.
-	a[0] += b[0];
-	a[1] += b[1];
-	a[2] += b[2];
-}
-
-void imprimeArray3(float v[3]) { //printf(array3.toString())
-	for (int posicion = 0; posicion < 3; posicion++) {
-		printf("%f, ",v[posicion]);
-	}
-}
-
-int main(int argc, char **argv) {
-	/*
-	//PROBADOR	
-	////// sign /////////
-	for (int i = -1; i < 2; i++) {
-		printf("%f, ", sign(i));
-	}
-	printf("debe ser -1, -1, 1\n");
-	/////////////////////	
-	//////// len3 //////////
-	for (int i = 0; i < 2; i++) {
-		float j = (float) i;
-		float v[3] = {j, j, j};
-		printf("%f debe ser %f\n", len3(v), sqrt(3 * i));
-	}
-	///////////////////////
-	/////// neg3 /////////
+/*
+// PROBADOR 
+void pruebaNeg3() {
 	float v[3] = {1, 1, 1};
 	
 	neg3(v);
@@ -79,9 +90,19 @@ int main(int argc, char **argv) {
 	imprimeArray3(v);
 	
 	printf("debe ser -1.0, -1.0, -1.0\n"); 
-	///////////////////////
-	*/
-	//////// add3 /////////
+}
+*/
+
+void add3(float a[3], float b[3]) { //modifica a haz una copia
+	//Returns the sum of 3-vectors a and b.
+	a[0] += b[0];
+	a[1] += b[1];
+	a[2] += b[2];
+}
+
+/*
+// PROBADOR 
+void prueba_Add3() {
 	float a[3] = {1, 1, 1}, 
 	      b[3] = {2, 2, 2};
 	      
@@ -89,9 +110,62 @@ int main(int argc, char **argv) {
 	      
 	imprimeArray3(a);  
 	
-	printf("debe ser 3.0, 3.0, 3.0\n");    
-	///////////////////////
+	printf("debe ser 3.0, 3.0, 3.0\n");  
+}
+*/
+
+void sub3(float a[3], float b[3]) { //modifica a haz una copia
+	//Returns the difference between 3-vectors a and b.
+	a[0] -= b[0];
+	a[1] -= b[1];
+	a[2] -= b[2];
+}
+
+/*
+//PROBADOR
+void pruebaSub3() {
+	float a[3] = {3, 3, 3}, 
+	      b[3] = {2, 2, 2};
+	 
+	sub3(a,b);
 	
+	imprimeArray3(a);
+	
+	printf("debe ser 1.0, 1.0, 1.0\n");        
+}
+*/
+
+void mul3(float v[3], float s) { //haz una copia
+	//Returns 3-vector v multiplied by scalar s.
+	v[0] *= s;
+	v[1] *= s;
+	v[2] *= s;
+}
+
+/*
+//PROBADOR
+void pruebaMul3() {
+	float v[3] = {1, 1, 1};
+	
+	mul3(v, 2);
+	
+	imprimeArray3(v);
+	
+	printf("debe ser 2.0, 2.0, 2.0\n"); 
+}
+*/
+
+int main(int argc, char **argv) {
+	/*	
+	//PROBADORES	
+	pruebaSign();	
+	pruebaLen3();	
+	pruebaNeg3();		
+	prueba_Add3();	
+	pruebaImprimeArray3();	
+	pruebaSub3();		
+	pruebaMul3();
+	*/
 	return 0;
 }
 
