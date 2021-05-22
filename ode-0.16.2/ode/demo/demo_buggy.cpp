@@ -56,13 +56,26 @@ void pruebaLen3() {
 }
 */
 
-void imprimeArray3(float v[3]) { //printf(array3.toString())
-	for (int posicion = 0; posicion < 3; posicion++) {
-		printf("%f, ",v[posicion]);
-	}
+void imprimeArray(float* array) { //float star = tipo array	
+	for (int posicion = 0; posicion <= sizeof(array); posicion++) { 
+		printf("%f ", array[posicion]); //array);
+	}	
 }
 
 /*
+//PROBADOR
+void pruebaImprimeArray() { //printf(array.toString())
+	float m[9] = {0,1,2,
+		      3,4,5,
+		      6,7,8};
+		      	
+	imprimeArray(m);
+}
+
+void imprimeArray3(float v[3]) { 
+	imprimeArray(v);
+}
+
 // PROBADOR 
 void pruebaImprimeArray3() {
 	float v[3] = {1, 1, 1};
@@ -267,6 +280,132 @@ void pruebaCross() {
 }
 */
 
+void project3(float v[3], float d[3]) {
+	//Returns projection of 3-vector v onto unit 3-vector d.
+	float v1[3] = {v[0], v[1], v[2]}; //copia de v 
+	
+	norm3(v1); //modifica v1
+		
+	mul3(v, dot3(v1, d));
+}
+
+/*
+//PROBADOR
+void pruebaProject3() {
+	float v[3] = {2, 2, 2},
+	      d[3] = {3, 3, 3}; //1,1,1?
+	
+	project3(v, d); //modifica v
+	
+	imprimeArray3(v);
+	
+	printf("debe ser 10.392304, 10.392304, 10.392304\n");
+}
+*/
+
+float acosdot3(float a[3], float b[3]) {
+	//Returns the angle between unit 3-vectors a and b.
+	float x = dot3(a, b), valor = 0.0; // valor E (0, inf)
+	
+	if (x < -1.0) { //llama
+		valor = M_PI;
+	} else {
+		if (x == 0.0) {
+			valor = acos(x); //acos(0)
+		}
+	}
+	
+	return valor;
+}
+
+/*
+//PROBADOR
+void pruebaAcosdot3() {
+	float a[3] = {2, 2, 2},
+	      b[3] = {3, 3, 3};
+	      
+	printf("%f debe ser 0.0\n", acosdot3(a, b));
+	//printf("%f", M_PI);
+	//printf("%f", acos(0));
+}
+*/ 
+
+void rotate3(float m[9], float v[3]) { //guarda en v! no en m!
+	//Returns the rotation of 3-vector v by 3x3 (row major) matrix m.
+	float xv = v[0], yv = v[1], zv = v[2];
+	
+	v[0] = xv * m[0] + yv * m[1] + zv * m[2];
+	v[1] = xv * m[3] + yv * m[4] + zv * m[5];
+	v[2] = xv * m[6] + yv * m[7] + zv * m[8];
+	
+	//v = {xv * m[0] + yv * m[1] + zv * m[2],
+	//     xv * m[3] + yv * m[4] + zv * m[5],
+ 	//     xv * m[6] + yv * m[7] + zv * m[8]};
+}
+
+/*
+//PROBADOR
+void pruebaRotate3() {
+	float m[9] = {1,1,1,
+		      1,1,1,
+		      1,1,1},
+	      v[3] = {2,2,2};
+	      
+	rotate3(m,v); //guarda en v
+	
+	imprimeArray3(v); //guarda en v
+	
+	printf("debe ser 6.0, 6.0, 6.0\n");		     
+}
+*/
+
+
+
+/*
+void imprimeArray9() {
+
+}
+*/
+
+void invert3x3(float m[9]) {
+	//Returns the inversion (transpose) of 3x3 rotation matrix m.
+	float            m1 = m[1], m2 = m[2], //m0
+	      m3 = m[3], m4 = m[4], m5 = m[5], 
+	      m6 = m[6], m7 = m[7], m8 = m[8];
+	
+	m[1] = m3;
+	m[2] = m6;
+	
+	m[3] = m1;
+	m[4] = m4;
+	m[5] = m7;
+	
+	m[6] = m2;
+	m[7] = m5;
+	m[8] = m8;
+}
+
+/*
+//PROBADOR
+void pruebaInvert3x3() {
+	float m[9] = {0,1,2,
+		      3,4,5,
+		      6,7,8};
+	
+	invert3x3(m);
+	
+	imprimeArray(m);
+	
+	printf("debe ser 0.0, 3.0, 6.0, 1.0, 4.0, 7.0, 2.0, 5.0, 8.0\n");
+}
+*/
+
+//TODO:
+//zaxis
+//calcRotMatrix
+//makeOpenGLMatrix
+//getBodyRelVec
+
 int main(int argc, char **argv) {
 	/*	
 	//PROBADORES	
@@ -274,25 +413,25 @@ int main(int argc, char **argv) {
 	pruebaLen3();	
 	pruebaNeg3();		
 	prueba_Add3();	
-	pruebaImprimeArray3();	
+	//pruebaImprimeArray3();	
 	pruebaSub3();		
 	pruebaMul3();	
 	pruebaDiv3();	
 	pruebaDist3();	
 	pruebaNorm3();	
 	pruebaDot3();	
-	pruebaCross();
+	pruebaCross();	
+	pruebaProject3();	
+	pruebaAcosdot3();	
+	pruebaRotate3();	
+	pruebaImprimeArray();	
+	pruebaInvert3x3();
 	*/
+	
 	return 0;
 }
 
-/*
-	float v1[3] = {0, 0, 0}; //copia de v necesario?
-	v1[0] = v[0];
-	v1[1] = v[1];
-	v1[2] = v[2];
-*/
-
+//float array[] = {};
 
 /*
 float LENGTH = 1, WIDTH = 1, HEIGHT = 0, RADIUS = 0, STARTZ = 1, CMASS = 1, WMASS = 0.2; // some constants
