@@ -56,8 +56,9 @@ void pruebaLen3() {
 }
 */
 
-void imprimeArray(float* array) { //float star = tipo array	
-	for (int posicion = 0; posicion <= sizeof(array); posicion++) { 
+//error sizeof(puntero) // tamaño
+void imprimeArray(float* array, int t) { //float star = tipo array	
+	for (int posicion = 0; posicion < t; posicion++) { 
 		printf("%f ", array[posicion]); //array);
 	}	
 }
@@ -281,7 +282,7 @@ void pruebaCross() {
 */
 
 void project3(float v[3], float d[3]) {
-	//Returns projection of 3-vector v onto unit 3-vector d.
+	//projection of 3-vector v onto unit 3-vector d.
 	float v1[3] = {v[0], v[1], v[2]}; //copia de v 
 	
 	norm3(v1); //modifica v1
@@ -331,7 +332,7 @@ void pruebaAcosdot3() {
 */ 
 
 void rotate3(float m[9], float v[3]) { //guarda en v! no en m!
-	//Returns the rotation of 3-vector v by 3x3 (row major) matrix m.
+	//the rotation of 3-vector v by 3x3 (row major) matrix m.
 	float xv = v[0], yv = v[1], zv = v[2];
 	
 	v[0] = xv * m[0] + yv * m[1] + zv * m[2];
@@ -368,7 +369,7 @@ void imprimeArray9() {
 */
 
 void invert3x3(float m[9]) {
-	//Returns the inversion (transpose) of 3x3 rotation matrix m.
+	//the inversion (transpose) of 3x3 rotation matrix m.
 	float            m1 = m[1], m2 = m[2], //m0
 	      m3 = m[3], m4 = m[4], m5 = m[5], 
 	      m6 = m[6], m7 = m[7], m8 = m[8];
@@ -400,11 +401,126 @@ void pruebaInvert3x3() {
 }
 */
 
+void zaxis(float m[9]) {
+	//the z-axis vector from 3x3 (row major) rotation matrix m.
+	m[0] = m[2];
+	m[1] = m[5];
+	m[2] = m[8];
+}
+
+/*
+//PROBADOR
+void pruebaZaxis() {
+	float m[9] = {0,1,2,
+		      3,4,5,
+		      6,7,8};
+		      
+	zaxis(m);
+
+	imprimeArray(m);
+	
+	printf("\n");
+}
+*/
+
+void calcRotMatrix(float axis[9], float angle) {
+	//the row-major 3x3 rotation matrix defining a rotation around axis by	angle.
+	float cosTheta = cos(angle), 
+	      sinTheta = sin(angle),
+	      t = 1.0 - cosTheta,
+	      
+	      axis0 = axis[0],
+	      axis1 = axis[1],
+	      axis2 = axis[2],
+	      
+	      axis3 = axis[3],
+	      axis4 = axis[4],
+	      axis5 = axis[5],
+	      
+	      axis6 = axis[6],
+	      axis7 = axis[7],
+	      axis8 = axis[8];
+	
+	axis[0] = t * axis0 * axis0 + cosTheta;
+	axis[1] = t * axis0 * axis1 - sinTheta * axis2;
+	axis[2] = t * axis0 * axis2 + sinTheta * axis1;
+	
+	axis[3] = t * axis0 * axis1 + sinTheta * axis2;
+	axis[4] = t * axis1 * axis1 + cosTheta;
+	axis[5] = t * axis1 * axis2 - sinTheta * axis0;
+	
+	axis[6] = t * axis0 * axis2 - sinTheta * axis1;
+	axis[7] = t * axis1 * axis2 + sinTheta * axis0;
+	axis[8] = t * axis2 * axis2 + cosTheta;
+}
+
+/*
+//PROBADOR
+void pruebaCalcRotMatrix() {
+	//the row-major 3x3 rotation matrix defining a rotation around axis by	angle.
+	float m[9] = {0,1,2,
+		      3,4,5,
+		      6,7,8};
+		      
+	calcRotMatrix(m, M_PI); //180º?
+	
+	imprimeArray(m);
+	
+	printf("debe ser -1.0, 0.0, 0.0, 0.0, 1.0, 4.0, 0.0, 4.0, 7.0\n");
+}
+*/
+
+void makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> r[16]
+	//an OpenGL compatible (column-major, 4x4 homogeneous) transformation	matrix from ODE compatible (row-major, 3x3) rotation matrix r and position	vector p.
+	float            r1 = r[1], r2 = r[2], 
+	      r3 = r[3], r4 = r[4], r5 = r[5], 
+	      r6 = r[6], r7 = r[7], r8 = r[8];
+	
+	//r = {};
+	r[1] = r3;
+	r[2] = r6;
+	
+	r[3] = 0.0;	
+	r[4] = r1;
+	r[5] = r4;	
+	
+	r[6] = r7;
+	r[7] = 0.0;	
+	r[8] = r2; //hasta aqui es r
+	
+	r[9] = r5; //a partir de aqui es r+ extendido
+	r[10] = r8;
+	r[11] = 0.0;
+	
+	r[12] = p[0];
+	r[13] = p[1];
+	r[14] = p[2];
+	r[15] = 1.0;	
+}
+
+/*
+//PROBADOR
+void pruebaMakeOpenGLMatrix() {
+	float r[16] = {0,1,2,3, 
+		       4,5,6,7,
+		       8,9,10,11,
+		       12,13,14,15}, 
+	      p[3] = {0,1,2}; //crea nueva r1, r[9] --> r[16]      
+	      	      
+	makeOpenGLMatrix(r,p);		
+	imprimeArray(r, 16);	
+	printf("debe ser 0.0, 3.0, 6.0, 0.0, 1.0, 4.0, 7.0, 0.0, 2.0, 5.0, 8.0, 0.0, 0.0, 1.0, 2.0, 1.0\n");
+}
+*/
+
+/*
+void getBodyRelVec() {
+
+}
+*/
+
 //TODO:
-//zaxis
-//calcRotMatrix
-//makeOpenGLMatrix
-//getBodyRelVec
+//getBodyRelVec //especifica de ODE
 
 int main(int argc, char **argv) {
 	/*	
@@ -425,15 +541,37 @@ int main(int argc, char **argv) {
 	pruebaAcosdot3();	
 	pruebaRotate3();	
 	pruebaImprimeArray();	
-	pruebaInvert3x3();
+	pruebaInvert3x3();	
+	pruebaZaxis();
+	pruebaCalcRotMatrix();	
+	pruebaMakeOpenGLMatrix();
 	*/
-	
 	return 0;
 }
 
-//float array[] = {};
-
 /*
+	// allocate array...
+	const int default_size = 10;
+
+	int array1[default_size] = {1,2,3,4,5,6,7,8,9,0};
+
+	// the array is now full so if we want to add to it we need to create a new array...
+	int array2[sizeof(array1) + default_size];
+
+	// now copy array...
+	std::memcpy(array2, array1, sizeof(array1));
+
+	// free resources...
+	delete[] array1;
+	
+	int arr[15]; // = new int[15];
+
+	for (int posicion = 0; posicion < sizeof(arr); posicion++) { //añade elem
+	    arr[posicion] = 1;
+	} 
+	
+float array[] = {};
+
 float LENGTH = 1, WIDTH = 1, HEIGHT = 0, RADIUS = 0, STARTZ = 1, CMASS = 1, WMASS = 0.2; // some constants
 
 static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
