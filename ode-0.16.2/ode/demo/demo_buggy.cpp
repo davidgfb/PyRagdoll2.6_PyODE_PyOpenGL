@@ -586,7 +586,68 @@ void asigna_Array(float array[3], float array1[3]) {
 	array[2] = array1[2];
 }
 
+/*
+class Ragdoll {
+	//Creates a ragdoll of standard size at the given offset.
+
+	//constructor
+	//public: 	
+	Ragdoll() { //variables ODE
+		
+	}
+
+};
+*/
+
+static void start() { // start simulation - set viewpoint
+	  dAllocateODEDataForThread(dAllocateMaskAll);
+
+	  static float pos[3] = {    1,      -1,   1}, // array3d de floats 
+	               rot[3] = {121.0,   -28.0, 0.0};
+	  
+	  //camara
+	  dsSetViewpoint (pos, rot);
+	  printf ("Press:\t'a' to increase speed.\n"
+		  	"\t'z' to decrease speed.\n"
+			"\t',' to steer left.\n"
+			"\t'.' to steer right.\n"
+			"\t' ' to reset speed and steering.\n");
+}
+
+static void simLoop (int pause) { // simulation loop
+	/*dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
+         	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);        	 	
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
+    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFudgeFactor,   0.1);
+
+    	 	dSpaceCollide (space,    0, &nearCallback);
+    	 	dWorldStep    (world, 0.05);
+
+    	 	dJointGroupEmpty (contactgroup); // remove all contact joints
+
+  	dsSetColor (0, 1, 1);
+  	dsSetTexture (DS_WOOD);
+  	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
+  	dsDrawBox (dBodyGetPosition(body[0]), dBodyGetRotation(body[0]), sides);
+  	dsSetColor (1, 1, 1);
+  		 dsDrawCylinder (dBodyGetPosition(body[i]),
+				 dBodyGetRotation(body[i]), 0.02, RADIUS);
+
+  	dVector3 ss;
+  	dGeomBoxGetLengths (ground_box, ss);
+  	dsDrawBox (dGeomGetPosition(ground_box), dGeomGetRotation(ground_box), ss);
+*/
+}
+
+static void command(int cmd) {  // lower 
+
+}
+
 int main(int argc, char **argv) {
+	////////// variables ///////////////
 	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0};
 	sub3(R_SHOULDER_POS, largoAntebrazo);
 	asigna_Array(R_ELBOW_POS, R_SHOULDER_POS);
@@ -621,311 +682,37 @@ int main(int argc, char **argv) {
 	
 	add3(L_ANKLE_POS, largoPie);
 	asigna_Array(L_TOES_POS, R_TOES_POS);	
+	////////////////////////////////
 	
-	/*	
-	//PROBADORES	
-	pruebaSign();	
-	pruebaLen3();	
-	pruebaNeg3();		
-	prueba_Add3();	
-	//pruebaImprimeArray3();	
-	pruebaSub3();		
-	pruebaMul3();	
-	pruebaDiv3();	
-	pruebaDist3();	
-	pruebaNorm3();	
-	pruebaDot3();	
-	pruebaCross();	
-	pruebaProject3();	
-	pruebaAcosdot3();	
-	pruebaRotate3();	
-	pruebaImprimeArray();	
-	pruebaInvert3x3();	
-	pruebaZaxis();
-	pruebaCalcRotMatrix();	
-	pruebaMakeOpenGLMatrix();
-	*/
-	return 0;
-}
-
-/*
-	// allocate array...
-	const int default_size = 10;
-
-	int array1[default_size] = {1,2,3,4,5,6,7,8,9,0};
-
-	// the array is now full so if we want to add to it we need to create a new array...
-	int array2[sizeof(array1) + default_size];
-
-	// now copy array...
-	std::memcpy(array2, array1, sizeof(array1));
-
-	// free resources...
-	delete[] array1;
-	
-	int arr[15]; // = new int[15];
-
-	for (int posicion = 0; posicion < sizeof(arr); posicion++) { //añade elem
-	    arr[posicion] = 1;
-	} 
-	
-float array[] = {};
-
-float LENGTH = 1, WIDTH = 1, HEIGHT = 0, RADIUS = 0, STARTZ = 1, CMASS = 1, WMASS = 0.2; // some constants
-
-static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
-
-static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, environment)
-static dSpaceID space, car_space;
-static dBodyID body[4];
-
-static dJointID joint[3]; // array3d de dJointIDs
-
-static dJointGroupID contactgroup;
-
-static dGeomID ground, box[1], sphere[3], ground_box;
-
-static dReal speed = 0, steer = 0; // things that the user controls // user commands
-
-dJointID getJuntaRuedaDelantera() {
-	return joint[0];
-}
-
-static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  
-	  // this is called by dSpaceCollide when two objects in space are
-	  // potentially colliding.
-	  
-	  int i = 0, n = 0;
-
-	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
-	  bool g2 = (o2 == ground || o2 == ground_box);
-	  
-	  if (g1 ^ g2) {
-		  const int N = 10;
-		  dContact contact[N];
-		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
-		  
-		  int sumaContactos = dContactSlip1   + dContactSlip2   +
-				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
-		  
-		  if (n > 0) {
-			    for (i = 0; i < n; i++) {
-			      contact[i].surface.mode = sumaContactos;
-			      
-			      contact[i].surface.mu = dInfinity;
-			      
-			      contact[i].surface.slip1    = 0.1;
-			      contact[i].surface.slip2    = 0.1;
-			      contact[i].surface.soft_erp = 0.5;
-			      contact[i].surface.soft_cfm = 0.3;
-			      
-			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
-			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
-					       dGeomGetBody(contact[i].geom.g2));
-			    }
-		  }
-	  }
-}
-
-static void start() { // start simulation - set viewpoint
-	  dAllocateODEDataForThread(dAllocateMaskAll);
-
-	  static float pos[3] = {    1,      -1,   1}, // array3d de floats 
-	               rot[3] = {121.0,   -27.5, 0.0};
-	  
-	  //camara
-	  dsSetViewpoint (pos, rot);
-	  printf ("Press:\t'a' to increase speed.\n"
-		  	"\t'z' to decrease speed.\n"
-			"\t',' to steer left.\n"
-			"\t'.' to steer right.\n"
-			"\t' ' to reset speed and steering.\n");
-}
-
-bool estaConduciendoCoche = false;
-
-float vAbs(float v) {
-	if (v < 0) {
-		v *= -1.0;
-	}
-	
-	return v;
-}
-
-float escalarV_R = 0.3; // velocidad a la que rueda > vMin
-
-bool estaParadoCoche(float v) { //[0]
-	bool estaParado = false;
-	
-	if (v == 0) {
-		estaParado = true;
-	} 
-	
-	return estaParado;
-}
-
-bool estaV_MinCoche(float v) { //vAnormalmenteReducida
-	bool estaV_Min = false;
-	
-	if (not estaParadoCoche(v) and vAbs(v) < escalarV_R) {
-		estaV_Min = true; //frena
-	}
-	
-	return estaV_Min;
-}
-
-bool estaRodandoCoche(float v) {
-	bool estaRodando = false;
-	
-	if (vAbs(v) == escalarV_R) { //[vR]
-		estaRodando = true;
-	}
-	
-	return estaRodando;
-}
-
-//parado = 0, vAnormalmenteReducida = (abs(+-(0)), abs(+-vR)) (frenara solo), rodando = abs(+-vR), en marcha = [abs(+-vR), abs(+-inf))
-
-static void command (int cmd) {  // lower 
-	estaConduciendoCoche = true;
-		
-	if (cmd == 'w' || cmd == 'W') { // flechas //acelerador
-		if (estaParadoCoche(speed)) { // si esta parado en parking mete directa y empieza a rodar // puede estar rodando en neutral...
-			speed = escalarV_R; // mete directa y rueda hacia delante [vR]
-		} else {
-			if (estaRodandoCoche(speed)) { // si esta en marcha atras o en directa acelera
-				speed *= 1.3; // +-30%
-			} 
-		}
-	}
-			
-	if (cmd == 's' || cmd == 'S') { //freno / marcha atras
-		if (estaParadoCoche(speed) || speed >= escalarV_R) { //directa +
-			speed -= escalarV_R; // mete y rueda marcha atras   //frena hacia atras		
-		} else {
-			if (speed <= -escalarV_R) { //marcha atras // -
-				speed += escalarV_R; //frena hacia delante
-			}
-		}		
-	}
-	
-	if (cmd == ' ') { // espacio = freno de mano
-    		speed = 0; // bloquea las ruedas (el coche no tiene abs)
-  	}
-	
-	/////////// giro ///////////////
-	if (cmd == 'a' || cmd == 'A') { 
-		if (steer > -1.0) {
-	    		steer -= 0.5;
-    		}
-	}
-	
-	if (cmd == 'd' || cmd == 'D') {
-		if (steer < 1.0) {
-    			steer += 0.5;
-    		}
-	}
-	////////////////////////////////// 	
-}
-
-int ciclosEspera = 20, cicloActual = 0;
-
-static void simLoop (int pause) { // simulation loop
-   	int i = 0;
-	float vMax = 0.1;
-	
-	/////////// freno automatico ///////////////
-	if (estaV_MinCoche(speed)) { //velocidad anormalmente reducida (0, vR)
-		//tiraFrenoMano() //echaFrenoMano()
-		speed = 0;
-	}
-	////////////////////////////////////////////
-	
-	/////// funcion retardada corrige direccion ///////// 
-	if (cicloActual > ciclosEspera) { // por si nos hemos saltado algun ciclo	
-		if (estaConduciendoCoche) { //jugador.estaConduciendo(coche)
-			estaConduciendoCoche = false;
-		} else { //no esta conduciendo coche 
-			steer = 0;
-		}
-		
-		cicloActual = 0;
-	} else {
-		cicloActual++;
-	}
-	/////////////////////////////////////////////////
-	  
-    	if (!pause) {
-         	dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
-         	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);
-
-    	 	dReal v = steer - dJointGetHinge2Angle1 (getJuntaRuedaDelantera()); // steering
-    
-    	 	if (v > vMax) {
-    		 	v = vMax;
-   	 	}
-    
-    	 	if (v < -vMax) { 
-    	 	 	v = -vMax;
-    	 	}
-    
-    	 	v *= 10.0;
-    	 	
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFudgeFactor,   0.1);
-
-    	 	dSpaceCollide (space,    0, &nearCallback);
-    	 	dWorldStep    (world, 0.05);
-
-    	 	dJointGroupEmpty (contactgroup); // remove all contact joints
-    	}
-
-  	dsSetColor (0, 1, 1);
-  	dsSetTexture (DS_WOOD);
-  	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
-  	dsDrawBox (dBodyGetPosition(body[0]), dBodyGetRotation(body[0]), sides);
-  	dsSetColor (1, 1, 1);
-	
-	for (i = 1; i < 4; i++) {
-  		 dsDrawCylinder (dBodyGetPosition(body[i]),
-				 dBodyGetRotation(body[i]), 0.02, RADIUS);
-	}
-
-  	dVector3 ss;
-  	dGeomBoxGetLengths (ground_box, ss);
-  	dsDrawBox (dGeomGetPosition(ground_box), dGeomGetRotation(ground_box), ss);
-}
-
-
-int main (int argc, char **argv) {
 	/*
-  	int i = 0;
+	int i = 0;
   	
   	dMass m;
-
-  	dsFunctions fn;   	// setup pointers to drawstuff callback functions
-  	
-  	fn.version = DS_VERSION;
-  	fn.start   = &start;
-  	fn.step    = &simLoop;
+	*/
+	
+	dsFunctions fn; // setup pointers to drawstuff callback functions
+	
+	fn.version = DS_VERSION;
+  	fn.start   = &start; 	
+  	fn.step    = &simLoop;  	
   	fn.command = &command;
-  	fn.stop    = 0;
-  	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
-
+  	fn.stop    = 0;  	
+  	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;	
+	
+	int cx = 0, cy = 0, w = 640, h = 480;
+	dsSimulationLoop (argc, argv, w, h, &fn);
+		
   	dInitODE2(0);   	// create world
-  	
+  	  	
   	world        = dWorldCreate();
-  	space        = dHashSpaceCreate (0);
-  	contactgroup = dJointGroupCreate (0);
+  	space        = dHashSpaceCreate(0);
+  	contactgroup = dJointGroupCreate(0);
   	
   	dWorldSetGravity (world, 0, 0, -0.5);
   	
   	ground = dCreatePlane (space, 0, 0, 1, 0);
-
+	
+	/*
   	body[0] = dBodyCreate (world);   	// chassis body
   	
   	dBodySetPosition (body[0],    0,      0, STARTZ);
@@ -1014,5 +801,177 @@ int main (int argc, char **argv) {
   	//printf("sqrt(2) = %f\n", sqrt(2));
   	
   	return 0;
+	
+	/*
+	################ MAIN #########################
+	# initialize GLUT
+	glutInit([])
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE)
+
+	# create the program window
+
+	glutInitWindowPosition(x, y);
+	glutInitWindowSize(width, height);
+	glutCreateWindow("PyODE Ragdoll Simulation")
+
+	# create an ODE world object
+	world = ode.World()
+	world.setGravity((0.0, -9.81, 0.0))
+	world.setERP(0.1)
+	world.setCFM(1E-4)
+
+	# create an ODE space object
+	space = ode.Space()
+
+	# create a plane geom to simulate a floor
+	floor = ode.GeomPlane(space, (0, 1, 0), 0)
+
+	# create a list to store any ODE bodies which are not part of the ragdoll (this
+	#   is needed to avoid Python garbage collecting these bodies)
+	bodies = []
+
+	# create a joint group for the contact joints generated during collisions
+	#   between two bodies collide
+	contactgroup = ode.JointGroup()
+
+	# set the initial simulation loop parameters
+	fps = 60
+	dt = 1.0 / fps
+	stepsPerFrame = 2
+	SloMo = 1
+	Paused = False
+	lasttime = time.time()
+	numiter = 0
+
+	# create the ragdoll
+	ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0))
+	print ("total mass is %.1f kg (%.1f lbs)" % (ragdoll.totalMass,
+		ragdoll.totalMass * 2.2))
+
+	# create an obstacle
+	obstacle, obsgeom = createCapsule(world, space, 1000, 0.05, 0.15)
+	pos = (random.uniform(-0.3, 0.3), 0.2, random.uniform(-0.15, 0.2))
+	#pos = (0.27396178783269359, 0.20000000000000001, 0.17531818795388002)
+	obstacle.setPosition(pos)
+	obstacle.setRotation(rightRot)
+	bodies.append(obstacle)
+	print ("obstacle created at %s" % (str(pos)))
+
+	# set GLUT callbacks
+	glutKeyboardFunc(onKey)
+	glutDisplayFunc(onDraw)
+	glutIdleFunc(onIdle)
+
+	# enter the GLUT event loop
+	glutMainLoop()
+	*/
+	
+	/*	
+	//PROBADORES	
+	pruebaSign();	
+	pruebaLen3();	
+	pruebaNeg3();		
+	prueba_Add3();	
+	//pruebaImprimeArray3();	
+	pruebaSub3();		
+	pruebaMul3();	
+	pruebaDiv3();	
+	pruebaDist3();	
+	pruebaNorm3();	
+	pruebaDot3();	
+	pruebaCross();	
+	pruebaProject3();	
+	pruebaAcosdot3();	
+	pruebaRotate3();	
+	pruebaImprimeArray();	
+	pruebaInvert3x3();	
+	pruebaZaxis();
+	pruebaCalcRotMatrix();	
+	pruebaMakeOpenGLMatrix();
+	*/
+	return 0;
+}
+
+/*
+
+	///////////// fijate aqui! ///////////
+	// allocate array...
+	const int default_size = 10;
+
+	int array1[default_size] = {1,2,3,4,5,6,7,8,9,0};
+
+	// the array is now full so if we want to add to it we need to create a new array...
+	int array2[sizeof(array1) + default_size];
+
+	// now copy array... 
+	std::memcpy(array2, array1, sizeof(array1));
+
+	// free resources...
+	delete[] array1;
+	/////////////////////////////////////
+	
+	int arr[15]; // = new int[15];
+
+	for (int posicion = 0; posicion < sizeof(arr); posicion++) { //añade elem
+	    arr[posicion] = 1;
+	} 
+	
+float array[] = {};
+
+float LENGTH = 1, WIDTH = 1, HEIGHT = 0, RADIUS = 0, STARTZ = 1, CMASS = 1, WMASS = 0.2; // some constants
+
+static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
+
+static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, environment)
+static dSpaceID space, car_space;
+static dBodyID body[4];
+
+static dJointID joint[3]; // array3d de dJointIDs
+
+static dJointGroupID contactgroup;
+
+static dGeomID ground, box[1], sphere[3], ground_box;
+
+static dReal speed = 0, steer = 0; // things that the user controls // user commands
+
+dJointID getJuntaRuedaDelantera() {
+	return joint[0];
+}
+
+static void nearCallback (void *, dGeomID o1, dGeomID o2) {
+	  
+	  // this is called by dSpaceCollide when two objects in space are
+	  // potentially colliding.
+	  
+	  int i = 0, n = 0;
+
+	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
+	  bool g2 = (o2 == ground || o2 == ground_box);
+	  
+	  if (g1 ^ g2) {
+		  const int N = 10;
+		  dContact contact[N];
+		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
+		  
+		  int sumaContactos = dContactSlip1   + dContactSlip2   +
+				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
+		  
+		  if (n > 0) {
+			    for (i = 0; i < n; i++) {
+			      contact[i].surface.mode = sumaContactos;
+			      
+			      contact[i].surface.mu = dInfinity;
+			      
+			      contact[i].surface.slip1    = 0.1;
+			      contact[i].surface.slip2    = 0.1;
+			      contact[i].surface.soft_erp = 0.5;
+			      contact[i].surface.soft_cfm = 0.3;
+			      
+			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
+			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
+					       dGeomGetBody(contact[i].geom.g2));
+			    }
+		  }
+	  }
 }
 */
