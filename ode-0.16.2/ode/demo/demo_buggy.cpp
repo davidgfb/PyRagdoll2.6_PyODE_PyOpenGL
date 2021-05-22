@@ -17,6 +17,74 @@ this also shows you how to use geom groups.
 	#define dsDrawCapsule dsDrawCapsuleD
 #endif
 
+//////////// variables //////////////////
+float LENGTH = 0.7, WIDTH = 0.5, HEIGHT = 0.2, RADIUS = 0.18, STARTZ = 0.5, CMASS = 1.0, WMASS = 0.2; // some constants
+
+static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
+
+static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, environment)
+static dSpaceID space, car_space;
+static dBodyID body[4];
+
+static dJointID joint[3]; // array3d de dJointIDs
+
+static dJointGroupID contactgroup;
+
+static dGeomID ground, box[1], sphere[3], ground_box;
+
+static dReal speed = 0, steer = 0; // things that the user controls // user commands
+
+
+///////////////////////////////////////
+
+/////////// nearCallback /////////////////
+static void nearCallback (void *, dGeomID o1, dGeomID o2) {
+	  
+	  // this is called by dSpaceCollide when two objects in space are
+	  // potentially colliding.
+	  
+	  int i = 0, n = 0;
+
+	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
+	  bool g2 = (o2 == ground || o2 == ground_box);
+	  
+	  if (g1 ^ g2) {
+		  const int N = 10;
+		  dContact contact[N];
+		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
+		  
+		  int sumaContactos = dContactSlip1   + dContactSlip2   +
+				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
+		  
+		  if (n > 0) {
+			    for (i = 0; i < n; i++) {
+			      contact[i].surface.mode = sumaContactos;
+			      
+			      contact[i].surface.mu = dInfinity;
+			      
+			      contact[i].surface.slip1    = 0.1;
+			      contact[i].surface.slip2    = 0.1;
+			      contact[i].surface.soft_erp = 0.5;
+			      contact[i].surface.soft_cfm = 0.3;
+			      
+			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
+			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
+					       dGeomGetBody(contact[i].geom.g2));
+			    }
+		  }
+	  }
+}
+//////////////////////////////////////////
+
+
+/*
+
+dJointID getJuntaRuedaDelantera() {
+	return joint[0];
+}
+
+*/
+
 float sign(float x) { //sentido bool
 	//Returns 1.0 if x is positive, -1.0 if x is negative or zero.
 	float valor = -1.0; // (x <= 0.0), x E (-inf, 0]
@@ -615,36 +683,52 @@ static void start() { // start simulation - set viewpoint
 }
 
 static void simLoop (int pause) { // simulation loop
-	/*dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
-         	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);        	 	
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFudgeFactor,   0.1);
-
-    	 	dSpaceCollide (space,    0, &nearCallback);
-    	 	dWorldStep    (world, 0.05);
-
-    	 	dJointGroupEmpty (contactgroup); // remove all contact joints
-
   	dsSetColor (0, 1, 1);
   	dsSetTexture (DS_WOOD);
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
   	dsDrawBox (dBodyGetPosition(body[0]), dBodyGetRotation(body[0]), sides);
   	dsSetColor (1, 1, 1);
+  	
+  	for (int i = 1; i < 4; i++) {	 
   		 dsDrawCylinder (dBodyGetPosition(body[i]),
 				 dBodyGetRotation(body[i]), 0.02, RADIUS);
-
+	}
+	
   	dVector3 ss;
   	dGeomBoxGetLengths (ground_box, ss);
   	dsDrawBox (dGeomGetPosition(ground_box), dGeomGetRotation(ground_box), ss);
-*/
+
 }
 
 static void command(int cmd) {  // lower 
 
 }
+
+/*
+//PROBADORES
+void prueba() {		
+	pruebaSign();	
+	pruebaLen3();	
+	pruebaNeg3();		
+	prueba_Add3();	
+	//pruebaImprimeArray3();	
+	pruebaSub3();		
+	pruebaMul3();	
+	pruebaDiv3();	
+	pruebaDist3();	
+	pruebaNorm3();	
+	pruebaDot3();	
+	pruebaCross();	
+	pruebaProject3();	
+	pruebaAcosdot3();	
+	pruebaRotate3();	
+	pruebaImprimeArray();	
+	pruebaInvert3x3();	
+	pruebaZaxis();
+	pruebaCalcRotMatrix();	
+	pruebaMakeOpenGLMatrix();	
+}
+*/
 
 int main(int argc, char **argv) {
 	////////// variables ///////////////
@@ -683,12 +767,8 @@ int main(int argc, char **argv) {
 	add3(L_ANKLE_POS, largoPie);
 	asigna_Array(L_TOES_POS, R_TOES_POS);	
 	////////////////////////////////
-	
-	/*
-	int i = 0;
-  	
+	  	
   	dMass m;
-	*/
 	
 	dsFunctions fn; // setup pointers to drawstuff callback functions
 	
@@ -702,7 +782,7 @@ int main(int argc, char **argv) {
 	int cx = 0, cy = 0, w = 640, h = 480;
 	dsSimulationLoop (argc, argv, w, h, &fn);
 		
-  	dInitODE2(0);   	// create world
+  	dInitODE2(0); // create world
   	  	
   	world        = dWorldCreate();
   	space        = dHashSpaceCreate(0);
@@ -712,19 +792,22 @@ int main(int argc, char **argv) {
   	
   	ground = dCreatePlane (space, 0, 0, 1, 0);
 	
-	/*
-  	body[0] = dBodyCreate (world);   	// chassis body
-  	
-  	dBodySetPosition (body[0],    0,      0, STARTZ);
+	body[0] = dBodyCreate (world);   	// chassis body
+	
+	dBodySetPosition (body[0],    0,      0, STARTZ);
   	dMassSetBox (&m,              1, LENGTH,  WIDTH, HEIGHT);
   	dMassAdjust (&m,          CMASS);
   	dBodySetMass  (body[0],      &m);
+	
+	//PROBADORES
+	//prueba();
+	
   	
   	box[0] = dCreateBox (0,  LENGTH,  WIDTH, HEIGHT);
   	
   	dGeomSetBody   (box[0], body[0]);
 
-  	for (i = 1; i < 4; i++) {   	// wheel bodies
+  	for (int i = 1; i < 4; i++) {   	// wheel bodies
     		body[i] = dBodyCreate (world);
 		
 		dQuaternion q;
@@ -739,13 +822,14 @@ int main(int argc, char **argv) {
 		dGeomSetBody (sphere[i - 1], body[i]);
 	 }
   	
+  	///*
   	float lengthEntreDos = LENGTH / 2, widthEntreDos = WIDTH / 2, startZ_MenosHeightEntreDos = STARTZ - HEIGHT / 2;
   	
   	dBodySetPosition (body[1],  lengthEntreDos,              0, startZ_MenosHeightEntreDos);
   	dBodySetPosition (body[2], -lengthEntreDos,  widthEntreDos, startZ_MenosHeightEntreDos);
   	dBodySetPosition (body[3], -lengthEntreDos, -widthEntreDos, startZ_MenosHeightEntreDos);
 
-  	for (i = 0; i < 3; i++) {   	// front and back wheel hinges
+  	for (int i = 0; i < 3; i++) {   	// front and back wheel hinges
     		joint[i] = dJointCreateHinge2 (world, 0);
     		
     		dJointAttach (joint[i], body[0], body[i + 1]);
@@ -756,12 +840,12 @@ int main(int argc, char **argv) {
     		dJointSetHinge2Axes   (joint[i], zunit, yunit);
   	}
 
-  	for (i = 0; i < 3; i++) {   	// set joint suspension
+  	for (int i = 0; i < 3; i++) {   	// set joint suspension
     		dJointSetHinge2Param (joint[i], dParamSuspensionERP, 0.4);
     		dJointSetHinge2Param (joint[i], dParamSuspensionCFM, 0.8);
   	}
 
-  	for (i = 1; i < 3; i++) {   	// lock back wheels along the steering axis
+  	for (int i = 1; i < 3; i++) {   	// lock back wheels along the steering axis
     		dJointSetHinge2Param (joint[i],dParamLoStop,0); //,dParamVel,0); // set stops to make sure wheels always stay in alignment
     		dJointSetHinge2Param (joint[i],dParamHiStop,0); // ,dParamFMax,dInfinity);
     		
@@ -784,7 +868,6 @@ int main(int argc, char **argv) {
   	dGeomSetPosition (ground_box, 2, 0, -0.34);
   	dGeomSetRotation (ground_box, R);
 
-  	int w = 800, h = 600;   	// run simulation
   	dsSimulationLoop (argc, argv, w, h, &fn);
 
   	dGeomDestroy (   box[0]);
@@ -796,99 +879,8 @@ int main(int argc, char **argv) {
   	dSpaceDestroy (space);
   	dWorldDestroy (world);
   	dCloseODE();
-  	
-  	
-  	//printf("sqrt(2) = %f\n", sqrt(2));
-  	
-  	return 0;
-	
-	/*
-	################ MAIN #########################
-	# initialize GLUT
-	glutInit([])
-	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE)
-
-	# create the program window
-
-	glutInitWindowPosition(x, y);
-	glutInitWindowSize(width, height);
-	glutCreateWindow("PyODE Ragdoll Simulation")
-
-	# create an ODE world object
-	world = ode.World()
-	world.setGravity((0.0, -9.81, 0.0))
-	world.setERP(0.1)
-	world.setCFM(1E-4)
-
-	# create an ODE space object
-	space = ode.Space()
-
-	# create a plane geom to simulate a floor
-	floor = ode.GeomPlane(space, (0, 1, 0), 0)
-
-	# create a list to store any ODE bodies which are not part of the ragdoll (this
-	#   is needed to avoid Python garbage collecting these bodies)
-	bodies = []
-
-	# create a joint group for the contact joints generated during collisions
-	#   between two bodies collide
-	contactgroup = ode.JointGroup()
-
-	# set the initial simulation loop parameters
-	fps = 60
-	dt = 1.0 / fps
-	stepsPerFrame = 2
-	SloMo = 1
-	Paused = False
-	lasttime = time.time()
-	numiter = 0
-
-	# create the ragdoll
-	ragdoll = RagDoll(world, space, 500, (0.0, 0.9, 0.0))
-	print ("total mass is %.1f kg (%.1f lbs)" % (ragdoll.totalMass,
-		ragdoll.totalMass * 2.2))
-
-	# create an obstacle
-	obstacle, obsgeom = createCapsule(world, space, 1000, 0.05, 0.15)
-	pos = (random.uniform(-0.3, 0.3), 0.2, random.uniform(-0.15, 0.2))
-	#pos = (0.27396178783269359, 0.20000000000000001, 0.17531818795388002)
-	obstacle.setPosition(pos)
-	obstacle.setRotation(rightRot)
-	bodies.append(obstacle)
-	print ("obstacle created at %s" % (str(pos)))
-
-	# set GLUT callbacks
-	glutKeyboardFunc(onKey)
-	glutDisplayFunc(onDraw)
-	glutIdleFunc(onIdle)
-
-	# enter the GLUT event loop
-	glutMainLoop()
-	*/
-	
-	/*	
-	//PROBADORES	
-	pruebaSign();	
-	pruebaLen3();	
-	pruebaNeg3();		
-	prueba_Add3();	
-	//pruebaImprimeArray3();	
-	pruebaSub3();		
-	pruebaMul3();	
-	pruebaDiv3();	
-	pruebaDist3();	
-	pruebaNorm3();	
-	pruebaDot3();	
-	pruebaCross();	
-	pruebaProject3();	
-	pruebaAcosdot3();	
-	pruebaRotate3();	
-	pruebaImprimeArray();	
-	pruebaInvert3x3();	
-	pruebaZaxis();
-	pruebaCalcRotMatrix();	
-	pruebaMakeOpenGLMatrix();
-	*/
+  	//*/
+  	  			
 	return 0;
 }
 
@@ -938,40 +930,5 @@ dJointID getJuntaRuedaDelantera() {
 	return joint[0];
 }
 
-static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  
-	  // this is called by dSpaceCollide when two objects in space are
-	  // potentially colliding.
-	  
-	  int i = 0, n = 0;
 
-	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
-	  bool g2 = (o2 == ground || o2 == ground_box);
-	  
-	  if (g1 ^ g2) {
-		  const int N = 10;
-		  dContact contact[N];
-		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
-		  
-		  int sumaContactos = dContactSlip1   + dContactSlip2   +
-				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
-		  
-		  if (n > 0) {
-			    for (i = 0; i < n; i++) {
-			      contact[i].surface.mode = sumaContactos;
-			      
-			      contact[i].surface.mu = dInfinity;
-			      
-			      contact[i].surface.slip1    = 0.1;
-			      contact[i].surface.slip2    = 0.1;
-			      contact[i].surface.soft_erp = 0.5;
-			      contact[i].surface.soft_cfm = 0.3;
-			      
-			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
-			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
-					       dGeomGetBody(contact[i].geom.g2));
-			    }
-		  }
-	  }
-}
 */
