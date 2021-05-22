@@ -472,6 +472,7 @@ static void command (int cmd) {  // lower
 
 int ciclosEspera = 20, cicloActual = 0;
 
+////////////////// simLoop ////////////////////////
 static void simLoop (int pause) { // simulation loop
    	int i = 0;
 	float vMax = 0.1;
@@ -540,6 +541,58 @@ static void simLoop (int pause) { // simulation loop
   	dGeomBoxGetLengths (ground_box, ss);
   	dsDrawBox (dGeomGetPosition(ground_box), dGeomGetRotation(ground_box), ss);
 }
+////////////////// fin simLoop ////////////////////
+
+///////////////////// ragdoll /////////////////////
+
+
+class Ragdoll {
+	//Creates a ragdoll of standard size at the given offset.
+	//constructor
+	//public: 	
+	
+	dWorldID world; 
+	dSpaceID space;
+	float densidad = 0.0,
+	//arrayBodies
+	//arrayGeoms
+	//arrayJuntas
+	      totalMass = 0.0,
+		  offset[3] = {0.0, 0.0, 0.0}; //new float[3]
+	
+	
+	Ragdoll(dWorldID w, dSpaceID s, float d, float o[3]) { //no densidad		
+		world = w;
+		space = s;
+		densidad = d;
+		asigna_Array(offset, o); //offset = {o[0],o[1],o[2]};
+		
+	}
+	
+	//sobrecarga para tener parametro offset definido por defecto
+	Ragdoll(dWorldID world, dSpaceID space, float density) {
+		float offset[3] = {0.0, 0.0, 0.0};
+		Ragdoll(world,space,density,offset);
+	}
+	
+	void addBody(float p1[3], float p2[3], float radius) {
+		//Adds a capsule body between joint positions p1 and p2 and with given radius to the ragdoll.
+		add3(p1, offset);
+		add3(p2, offset);
+		
+		//cylinder length not including endcaps, make capsules overlap by half radius at joints
+		float cyllen = dist3(p1, p2) - radius; //largo cilindro
+	
+		dBodyID body = dBodyCreate(world);
+	
+		dMass m; //?
+		
+		dMassSetCylinder(&m,densidad,3,radius,cyllen); //dCreateCapsule? //3=eje z //m.
+	}
+};
+
+
+
 
 /////////////// main ///////////////////////
 int main (int argc, char **argv) {
