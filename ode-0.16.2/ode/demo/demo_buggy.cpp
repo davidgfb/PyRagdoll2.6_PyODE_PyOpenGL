@@ -519,10 +519,109 @@ void getBodyRelVec() {
 }
 */
 
+////////////// variables ////////////////////
+//rotation directions are named by the third (z-axis) row of the 3x3 matrix, because ODE capsules are oriented along the z-axis
+float rightRot[9] = {0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0},
+      leftRot[9]  = {0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0},
+      upRot[9]    = {1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0},
+      downRot[9]  = {1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0},
+      bkwdRot[9]  = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
+
+//axes used to determine constrained joint rotations
+rightAxis[3] = { 1.0,  0.0,  0.0},
+leftAxis[3]  = {-1.0,  0.0,  0.0},
+upAxis[3]    = { 0.0,  1.0,  0.0},
+downAxis[3]  = { 0.0, -1.0,  0.0},
+bkwdAxis[3]  = { 0.0,  0.0,  1.0},
+fwdAxis[3]   = { 0.0,  0.0, -1.0},
+
+UPPER_ARM_LEN =  0.3,
+FORE_ARM_LEN  = 0.25,
+HAND_LEN      = 0.13, // wrist to mid-fingers only
+FOOT_LEN      = 0.18, //ankles to base of ball of foot only
+HEEL_LEN      = 0.05,
+
+BROW_H     = 1.68,
+MOUTH_H    = 1.53,
+NECK_H     =  1.5,
+SHOULDER_H = 1.37,
+CHEST_H    = 1.35,
+HIP_H      = 0.86,
+KNEE_H     = 0.48,
+ANKLE_H    = 0.08,
+
+SHOULDER_W = 0.41,
+CHEST_W    = 0.36, // actually wider, but we want narrower than shoulders (esp. with large radius)
+LEG_W      = 0.28, // between middles of upper legs
+PELVIS_W   = 0.25, // actually wider, but we want smaller than hip width;
+
+R_SHOULDER_POS[3] = {(float) (SHOULDER_W / -2.0), SHOULDER_H, 0.0},
+L_SHOULDER_POS[3] = {(float) (SHOULDER_W / 2.0), SHOULDER_H, 0.0},
+
+R_ELBOW_POS[3],
+L_ELBOW_POS[3],
+R_WRIST_POS[3],
+L_WRIST_POS[3],
+R_FINGERS_POS[3],
+L_FINGERS_POS[3],
+
+R_HIP_POS[3]   = {(float) (LEG_W / -2.0),   HIP_H, 0.0},
+L_HIP_POS[3]   = {(float) (LEG_W /  2.0),   HIP_H, 0.0},
+R_KNEE_POS[3]  = {(float) (LEG_W / -2.0),  KNEE_H, 0.0},
+L_KNEE_POS[3]  = {(float) (LEG_W /  2.0),  KNEE_H, 0.0},
+R_ANKLE_POS[3] = {(float) (LEG_W / -2.0), ANKLE_H, 0.0},
+L_ANKLE_POS[3] = {(float) (LEG_W /  2.0), ANKLE_H, 0.0},
+
+R_HEEL_POS[3],
+L_HEEL_POS[3],
+R_TOES_POS[3],
+L_TOES_POS[3];
+
 //TODO:
-//getBodyRelVec //especifica de ODE
+//getBodyRelVec //f especifica de ODE
+
+void asigna_Array(float array[3], float array1[3]) {
+	array[0] = array1[0];
+	array[1] = array1[1];
+	array[2] = array1[2];
+}
 
 int main(int argc, char **argv) {
+	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0};
+	sub3(R_SHOULDER_POS, largoAntebrazo);
+	asigna_Array(R_ELBOW_POS, R_SHOULDER_POS);
+
+	add3(L_SHOULDER_POS, largoAntebrazo);	
+	asigna_Array(L_ELBOW_POS, L_SHOULDER_POS);
+	
+	float largoBrazo[3] = {FORE_ARM_LEN, 0.0, 0.0};
+	sub3(R_ELBOW_POS, largoBrazo);
+	asigna_Array(R_WRIST_POS, R_ELBOW_POS);
+	
+	add3(L_ELBOW_POS, largoBrazo);
+	asigna_Array(L_WRIST_POS, L_ELBOW_POS);
+	
+	float largoMano[3] = {HAND_LEN, 0.0, 0.0};
+	sub3(R_WRIST_POS, largoMano);
+	asigna_Array(R_FINGERS_POS, R_WRIST_POS);
+	
+	add3(L_WRIST_POS, largoMano);
+	asigna_Array(L_FINGERS_POS, L_WRIST_POS);
+
+	float largoTobillo[3] = {0.0, 0.0, HEEL_LEN};
+	sub3(R_ANKLE_POS, largoTobillo);
+	asigna_Array(R_HEEL_POS, R_ANKLE_POS);
+	
+	sub3(L_ANKLE_POS, largoTobillo);
+	asigna_Array(L_HEEL_POS, L_ANKLE_POS);
+
+	float largoPie[3] = {0.0, 0.0, FOOT_LEN};
+	add3(R_ANKLE_POS, largoPie);
+	asigna_Array(R_TOES_POS, R_ANKLE_POS);
+	
+	add3(L_ANKLE_POS, largoPie);
+	asigna_Array(L_TOES_POS, R_TOES_POS);	
+	
 	/*	
 	//PROBADORES	
 	pruebaSign();	
