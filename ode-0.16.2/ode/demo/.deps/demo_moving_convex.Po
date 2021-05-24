@@ -102,7 +102,7 @@ demo_moving_convex.o: demo_moving_convex.cpp /usr/include/stdc-predef.h \
  ../../include/ode/threading_impl.h ../../include/ode/export-dif.h \
  ../../include/ode/version.h ../../include/ode/odecpp.h \
  ../../include/ode/odecpp_collision.h ../../include/drawstuff/drawstuff.h \
- ../../include/drawstuff/version.h texturepath.h
+ ../../include/drawstuff/version.h
 
 /usr/include/stdc-predef.h:
 
@@ -363,5 +363,3 @@ demo_moving_convex.o: demo_moving_convex.cpp /usr/include/stdc-predef.h \
 ../../include/drawstuff/drawstuff.h:
 
 ../../include/drawstuff/version.h:
-
-texturepath.h:

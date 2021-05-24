@@ -1,99 +1,133 @@
 #include <ode/ode.h>
 #include <drawstuff/drawstuff.h>
-#include "texturepath.h"
-
-struct MyObject {
-	dBodyID body;			
-	dGeomID geom[1];		
-};
-
-int show_contacts = 0;	
 
 dWorldID world;
 dSpaceID space;
-MyObject obj[1];
+dGeomID ID_GeomCapsula; //puntero a struct vacio dxGeom
 dJointGroupID contactgroup;
 
-dReal dVector3R[3];
-
-static void nearCallback(void*, dGeomID o1, dGeomID o2) {
-	dBodyID b1 = dGeomGetBody( o1 ),
-	b2 = dGeomGetBody( o2 );
-	
-	if (not( b1 && b2 &&  dAreConnectedExcluding( b1,b2,dJointTypeContact ))) {
-
-		dContact contact[1];   
+static void nearCallback(void *data, dGeomID o, dGeomID o1) {
+	dContact contact[1], //es un struct  		
+		     contacto = contact[0];
 		
-		dContact contacto = contact[0];
+	contacto.surface.mode = 20; //dContactBounce + dContactSoftCFM
+	contacto.surface.mu = dInfinity;
+	contacto.surface.mu2 = 0;
+	contacto.surface.bounce = 0.1;
+	contacto.surface.bounce_vel = 0.1;
+	contacto.surface.soft_cfm = 0.01;
 		
-			contacto.surface.mode = dContactBounce + dContactSoftCFM; 
-			contacto.surface.mu = dInfinity;
-			contacto.surface.mu2 = 0;
-			contacto.surface.bounce = 0.1;
-			contacto.surface.bounce_vel = 0.1;
-			contacto.surface.soft_cfm = 0.01;
-		
-		dCollide(o1, o2, 1, &contact[0].geom, sizeof(dContact));
+	dCollide(o, o1, 1, &contact[0].geom, sizeof(dContact));
 		//&contact[0] != &contacto
-		dMatrix3 RI;
-		dRSetIdentity(RI);
-		dReal ss[3] = {0.02, 0.02, 0.02};
+	dMatrix3 RI;
+	dRSetIdentity(RI);
 			
-		dJointAttach(dJointCreateContact(world, contactgroup, contact), b1, b2);		
-	}
+	dJointAttach(dJointCreateContact(world, contactgroup, contact), dGeomGetBody(o), dGeomGetBody(o1));		
 }
 
-int i = 0;
+class Capsula { 
+	float parametros[2]; //private
+	//char txt[] = "{Capsula: "+(char*) ID_GeomCapsula;
+	char sCapsula[10] = "{Capsula:";	
+	dGeomID ID_GeomCapsula;
+	//char aC_ID_GeomCapsula[] = (char*) ID_GeomCapsula;
+	
+	public:	
+		Capsula() { 
+			//para declarar clase no inicializada
+		}
+	
+		Capsula(dGeomID pID_GeomCapsula) {
+			setID_GeomCapsula(pID_GeomCapsula);
+		}
+		
+		////////////// getter /////////////////
+		dGeomID getID_GeomCapsula() {
+			return ID_GeomCapsula;
+		}
+		//////////// fin getter ///////////////
+		
+		/////////////// setter /////////////////
+		void setID_GeomCapsula(dGeomID pID_GeomCapsula) {
+			ID_GeomCapsula = pID_GeomCapsula;
+		}
+		///////////// fin setter //////////////
+		
+		float* getParamsGeoms() {
+			//devuelve puntero a array float2 de parametros geoms capsula
+			float radio_Obtenido, 
+				  largo_Obtenido;
+			
+			dGeomCapsuleGetParams(getID_GeomCapsula(), &radio_Obtenido, &largo_Obtenido);
+
+			parametros[0] = radio_Obtenido;
+			parametros[1] = largo_Obtenido;
+
+			return parametros; 
+		}
+		
+		float getRadio() {
+			float *parametros = getParamsGeoms(),
+				  radioCapsula = parametros[0];
+				  
+			return radioCapsula;			
+		}
+		
+		float getLargo() {
+			float *parametros = getParamsGeoms(),
+				  largoCapsula = parametros[1];
+		
+			return largoCapsula;
+		}
+			
+		char* toString() {			
+			return sCapsula;
+		}
+};
+
+Capsula capsula; //no se ha inicializado pero ha usado constructor vacio
 
 static void start() {
-	static float xyz[3] = {1.0, 0.0, 1.0},
-	hpr[3] = {180.0, -45.0, 0.0};
-	dsSetViewpoint(xyz, hpr);
-		
-	dReal sides[3];
-	dMass m;
-		
-	obj[i].body = dBodyCreate( world );
-		
-	for (int k = 0; k < 3; k++) {
-		sides[k] = 0.2;
-	}
+	float xyz[3] = {-5.0,   0.0, 5.0},
+		  tpr[3] = { 0.0, -45.0, 0.0},
+		  ladoX = 1.0, 
+		  ladoY = 2.0; //tilt,pan,roll				
+	dMass m;				
+	dMatrix3 R; //float a[3]
+	dBodyID obj = dBodyCreate(world);  	
 
-	dMatrix3 R;
+	dsSetViewpoint(xyz, tpr);
+	dBodySetPosition(obj, 0, 0, 3);	
+	dRFromAxisAndAngle(R, 0.0, 0.0, 0.0, 0.0);				
+	dBodySetRotation(obj, R); 
+	dBodySetData(obj, (void*) (dsizeint) 0); 
+
+	dMassSetCapsule(&m, 5.0, 3, ladoX, ladoY);
 	
-	dBodySetPosition(obj[i].body, 0, 0, 1);			
-	dRFromAxisAndAngle(R, 0.0, 0.0, 0.0, 0.0 );				
-	dBodySetRotation(obj[i].body, R);
-	dBodySetData(obj[i].body, (void*)(dsizeint) i);
-
-	sides[0] /= 2.0;
-	dMassSetCapsule(&m, 5.0, 3, sides[0], sides[1]);
-	obj[i].geom[0] =  dCreateCapsule(space, sides[0], sides[1]);
-      
-	dGeomSetBody(obj[i].geom[0], obj[i].body );
-	dBodySetMass(obj[i].body, &m);
+	ID_GeomCapsula = dCreateCapsule(space, ladoX, ladoY); 
+	   
+	dGeomSetBody(ID_GeomCapsula, obj); 
+	dBodySetMass(obj, &m); 
+	
+	capsula = Capsula(ID_GeomCapsula); //ID_GeomCapsula
+		
+	printf("%s\n", capsula.toString());
+	//printf("%p\n", capsula.getID_GeomCapsula());
 }
 
-void drawGeom( dGeomID g, const dReal *pos, const dReal *R, int show_aabb ) {
-		dReal radius,length;
-		dGeomCapsuleGetParams( g,&radius,&length );
-		dsDrawCapsule(dGeomGetPosition(g), dGeomGetRotation(g), length, radius);		
+void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show_aabb) {	
+		dsDrawCapsule(dGeomGetPosition(ID_GeomCapsula), 					  dGeomGetRotation(ID_GeomCapsula), 					  capsula.getLargo(), 					  						  capsula.getRadio());		
 }
 
 static void simLoop(int pause) {
-	dSpaceCollide(space, 0, &nearCallback);
-	dWorldQuickStep(world, 0.05);
-
-	for (int j = 0; j < 2; j++) {
-		dSpaceGetGeom(space, j);
-	}
-
-	dJointGroupEmpty(contactgroup);
-	drawGeom(obj[0].geom[0], 0, 0, 0);
+	dSpaceCollide(space, 0, &nearCallback); //sin esto no hay colisiones
+	dWorldQuickStep(world, 0.05); //entra bucle	
+	dJointGroupEmpty(contactgroup); //sin esto rebota y elimina g
+	
+	drawGeom(ID_GeomCapsula, 0, 0, 0); //pinta 
 }
 
-
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
 	dsFunctions fn;
 	
 	fn.version = DS_VERSION;
@@ -107,16 +141,11 @@ int main(int argc, char **argv){
 
 	space = dSimpleSpaceCreate(0);
 	contactgroup = dJointGroupCreate(0);
-	dWorldSetGravity(world, 0, 0, -0.5 );
-	dWorldSetCFM(world, 1e-5);
-	dCreatePlane(space, 0, 0, 1,0);
+	dWorldSetGravity(world, 0, 0, -10 );
+	//dWorldSetCFM(world, 1e-5);
+	dCreatePlane(space, 0, 0, 1, 0);
 
-	dsSimulationLoop(argc, argv, 1000, 1000, &fn);
-
-	dJointGroupDestroy(contactgroup);
-	dSpaceDestroy(space);
-	dWorldDestroy(world);
-	dCloseODE();
+	dsSimulationLoop(argc, argv, 1000, 1000, &fn); //fundamental
 	
 	return 0;
 }
