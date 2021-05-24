@@ -6,6 +6,24 @@
 
 2. make
 
+#############################################################################################################
+g++ -DHAVE_CONFIG_H -I. -I../../ode/src  -I../../include -I../../include -DDRAWSTUFF_TEXTURE_PATH="\"/home/david/ode-0.16.2/drawstuff/textures\"" -DdTRIMESH_ENABLED   -g -O2 -MT demo_buggy.o -MD -MP -MF .deps/demo_buggy.Tpo -c -o demo_buggy.o demo_buggy.cpp
+mv -f .deps/demo_buggy.Tpo .deps/demo_buggy.Po
+/bin/bash ../../libtool  --tag=CXX   --mode=link g++  -g -O2     -o demo_buggy demo_buggy.o ../../drawstuff/src/libdrawstuff.la ../../ode/src/libode.la -lGLU -lGL  -lrt -lm  -lpthread
+libtool: link: g++ -g -O2 -o demo_buggy demo_buggy.o  ../../drawstuff/src/.libs/libdrawstuff.a -lX11 ../../ode/src/.libs/libode.a -lGLU -lGL -lrt -lm -lpthread
+
+
+
+
+#############################################################################################################
+
+
+
+
+
+
+
+
 make:
   g++ -g -O2 -o demo_trimesh demo_trimesh.o  ../../drawstuff/src/.libs/libdrawstuff.a -lX11 ../../ode/src/.libs/libode.a -lGLU -lGL -lrt -lm -lpthread
   
