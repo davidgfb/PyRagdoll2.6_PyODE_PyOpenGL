@@ -19,79 +19,135 @@ static void nearCallback(void *data, dGeomID o, dGeomID o1) {
 		
 	dCollide(o, o1, 1, &contact[0].geom, sizeof(dContact));
 		//&contact[0] != &contacto
-	dMatrix3 RI;
-	dRSetIdentity(RI);
+	dRSetIdentity(new dMatrix3);
 			
 	dJointAttach(dJointCreateContact(world, contactgroup, contact), dGeomGetBody(o), dGeomGetBody(o1));		
 }
 
 class Capsula { 
-	float parametros[2]; //private
-	//char txt[] = "{Capsula: "+(char*) ID_GeomCapsula;
-	char sCapsula[10] = "{Capsula:";	
-	dGeomID ID_GeomCapsula;
-	//char aC_ID_GeomCapsula[] = (char*) ID_GeomCapsula;
+	char cToString[100]; 
+	float radioCapsula,
+		  largoCapsula;
+	
+	void setParamsGeoms(dGeomID pID_GeomCapsula) {									
+			dGeomCapsuleGetParams(pID_GeomCapsula, &radioCapsula, &largoCapsula); //Setter?
+	}
 	
 	public:	
-		Capsula() { 
-			//para declarar clase no inicializada
+		//////////// constructor ////////////////////
+		Capsula() { //para declarar clase no inicializada
+			
 		}
 	
 		Capsula(dGeomID pID_GeomCapsula) {
-			setID_GeomCapsula(pID_GeomCapsula);
+			setParamsGeoms(pID_GeomCapsula);
+			
+			sprintf(cToString, "Capsula: {radio = %f, largo = %f}\n", getRadio(), getLargo());
 		}
+		////////////// fin constructor ////////////
 		
-		////////////// getter /////////////////
-		dGeomID getID_GeomCapsula() {
-			return ID_GeomCapsula;
-		}
-		//////////// fin getter ///////////////
-		
-		/////////////// setter /////////////////
+		/////////////// setter /////////////////		
 		void setID_GeomCapsula(dGeomID pID_GeomCapsula) {
 			ID_GeomCapsula = pID_GeomCapsula;
 		}
 		///////////// fin setter //////////////
 		
-		float* getParamsGeoms() {
-			//devuelve puntero a array float2 de parametros geoms capsula
-			float radio_Obtenido, 
-				  largo_Obtenido;
-			
-			dGeomCapsuleGetParams(getID_GeomCapsula(), &radio_Obtenido, &largo_Obtenido);
-
-			parametros[0] = radio_Obtenido;
-			parametros[1] = largo_Obtenido;
-
-			return parametros; 
-		}
-		
+		////////////// getter /////////////////
 		float getRadio() {
-			float *parametros = getParamsGeoms(),
-				  radioCapsula = parametros[0];
-				  
 			return radioCapsula;			
 		}
 		
 		float getLargo() {
-			float *parametros = getParamsGeoms(),
-				  largoCapsula = parametros[1];
-		
 			return largoCapsula;
 		}
+		//////////// fin getter ///////////////
 			
 		char* toString() {			
-			return sCapsula;
+			return cToString;
 		}
 };
 
-Capsula capsula; //no se ha inicializado pero ha usado constructor vacio
+Capsula capsula; //no se ha inicializado pero ha usado constructor vacio tiene que declararse debajo de la def clase
+
+class Camara {
+	float pos[3], //unidades x,y,z
+		  rot[3]; //angulos alfa,beta,gamma
+	char cToString[200]; 
+	
+	public:
+		Camara(float p_Pos[3], float pRot[3]) {
+			for (int posicion = 0; posicion < 3; posicion++) {
+				pos[posicion] = p_Pos[posicion];
+				rot[posicion] = pRot[posicion];
+			} 	
+			
+			sprintf(cToString, "Camara: {x = %f, y = %f, z = %f,\nalfa = %f, beta = %f, gamma = %f}\n\n", 
+					getX(), getY(), getZ(),
+					getAlfa(), getBeta(), getGamma());	
+		}
+		
+		/////////////// getter ///////////////////		
+		///////////// posicion /////////////////
+		float getX() {
+			return pos[0];
+		}
+		
+		float getY() {
+			return pos[1];
+		}
+		
+		float getZ() {
+			return pos[2];
+		}
+		///////////// fin posicion ///////////////		
+		///////////// rotacion //////////////////
+		float getAlfa() {
+			return rot[0];
+		}
+		
+		float getBeta() {
+			return rot[1];
+		}
+		
+		float getGamma() {
+			return rot[2];
+		}
+		///////////// fin rotacion ////////////////
+		//////////////// fin getter /////////////
+		
+		char* toString() {			
+			return cToString;
+		}
+};
+
+/*
+char* arrayFloats_A_ArrayChars(float arrayFloats[]) {
+	char arrayChars[50];
+  	int n = sprintf(arrayChars, "%f", arrayFloats); //len(arrayChars)
+  	
+	return arrayChars;
+}
+*/
 
 static void start() {
 	float xyz[3] = {-5.0,   0.0, 5.0},
-		  tpr[3] = { 0.0, -45.0, 0.0},
+		  tpr[3] = { 0.0, -45.0, 0.0}, //tilt,pan,roll
 		  ladoX = 1.0, 
-		  ladoY = 2.0; //tilt,pan,roll				
+		  ladoY = 2.0; 	
+		  
+	Camara cam = Camara(xyz, tpr);
+	printf("%s", cam.toString());		
+	
+	/*
+	printf("%sx = %f, y = %f, z = %f}\n", cam.toString(), cam.getX(), cam.getY(), cam.getZ());
+	*/
+	/*
+	for (int pos = 0; pos < 3; pos++) {
+		printf("%f", );
+	}
+	*/
+	//printf("%s\n", (char*) cam.getPos());		  
+		  			
 	dMass m;				
 	dMatrix3 R; //float a[3]
 	dBodyID obj = dBodyCreate(world);  	
