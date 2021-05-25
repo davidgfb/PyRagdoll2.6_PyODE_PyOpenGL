@@ -6,33 +6,26 @@ this also shows you how to use geom groups.
 #include <drawstuff/drawstuff.h>
 #include "texturepath.h"
 
-#ifdef _MSC_VER
-	#pragma warning(disable:4244 4305)  // for VC++, no precision loss complaints
-#endif
-
-#ifdef dDOUBLE // select correct drawing functions
-	#define dsDrawBox dsDrawBoxD
-	#define dsDrawSphere dsDrawSphereD
-	#define dsDrawCylinder dsDrawCylinderD
-	#define dsDrawCapsule dsDrawCapsuleD
-#endif
-//
 //////////// variables ////////////////////
-float LENGTH = 0.7, WIDTH = 0.5, HEIGHT = 0.2, RADIUS = 0.18, STARTZ = 0.5, CMASS = 1.0, WMASS = 0.2; // some constants
+float   LENGTH = 0.7, 
+	WIDTH = 0.5, 
+	HEIGHT = 0.2, 
+	RADIUS = 0.18, 
+	STARTZ = 0.5, 
+	CMASS = 1.0, 
+	WMASS = 0.2; // some constants
 
-static const dVector3 yunit = {0, 1, 0}, zunit = {0, 0, 1};
+static const dVector3   yunit = {0, 1, 0}, 
+			zunit = {0, 0, 1};
 
 static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, environment)
 static dSpaceID space, car_space;
 static dBodyID body[4];
-
 static dJointID joint[3]; // array3d de dJointIDs
-
 static dJointGroupID contactgroup;
-
 static dGeomID ground, box[1], sphere[3], ground_box;
-
-static dReal speed = 0, steer = 0; // things that the user controls // user commands
+static dReal    speed = 0, 
+		steer = 0; // things that the user controls // user commands
 ///////////////////////////////////////////
 
 //////////////// variables ragdoll /////////////
@@ -592,7 +585,96 @@ class Ragdoll {
 };
 
 
+class Caja {
+	dGeomID ID;
 
+	public:
+		Caja(dSpaceID espacio, dReal dx, dReal dy, dReal dz, dMatrix3 R) {
+			ID = dCreateBox(space, dx, dy, dz);   
+			dGeomSetPosition(ID, 2, 0, -0.34);
+  			dGeomSetRotation(ID, R);
+		}
+		
+		dGeomID getID() {
+			return ID;
+		}
+};
+
+class Espacio {
+	dSpaceID ID;
+
+	public:
+		Espacio(dSpaceID espacio) {
+			ID = dSimpleSpaceCreate (space);   	// create car space and add it to the top level space
+		}
+		
+		dSpaceID getID() {
+			return ID;
+		}
+		
+		void annade(dSpaceID ID, dGeomID ID_Geom) {
+			dSpaceAdd (ID, ID_Geom);
+		}
+};
+
+class Cuerpo {
+	//dReal *posicion;
+	dBodyID ID;
+
+	public:
+		Cuerpo() {
+		
+		}
+	
+		Cuerpo(dWorldID ID_Mundo) {
+			ID = dBodyCreate(ID_Mundo);
+		}
+		
+		void setPosicion(dBodyID pID, dReal x, dReal y, dReal z) {					
+			dBodySetPosition(pID,x,y,z);
+		}
+		
+		void setMasa(dBodyID ID, dMass *mass) { 
+			dBodySetMass(ID,mass);
+		}
+		
+		void setQuaternion(dBodyID ID, dQuaternion q) {
+			dBodySetQuaternion(ID,q);
+		}
+				
+		dBodyID getID() {
+			return ID;
+		}
+		
+		/*
+		dReal* getPosicion() {
+			return dBodyGetPosition(ID);
+		}
+		*/		
+};
+
+class Junta {
+	public:
+		Junta() {
+		
+		}
+		
+		void setAnclaBisagra2(dJointID ID, dReal x, dReal y, dReal z) { 
+			dJointSetHinge2Anchor (ID,  x,  y, z);
+		}
+		
+		void setEjesBisagra2(dJointID ID, const dReal* eje, const dReal* eje1) {
+			dJointSetHinge2Axes(ID,eje,eje1); 
+		}
+		
+		void setParamsBisagra2(dJointID ID, int parameter, dReal value) {
+			dJointSetHinge2Param(ID,parameter,value);
+		}
+};
+
+Cuerpo cuerpos[3];
+
+//clase Coche, Moto...
 
 /////////////// main ///////////////////////
 int main (int argc, char **argv) {
@@ -635,9 +717,6 @@ int main (int argc, char **argv) {
 	
 	//////////// fin variables ragdoll ///////////////
 
-
-
-
   	int i = 0;
   	
   	dMass m;
@@ -651,7 +730,7 @@ int main (int argc, char **argv) {
   	fn.stop    = 0;
   	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
 
-  	dInitODE2(0);   	// create world
+  	dInitODE2(0);   	
   	
   	world        = dWorldCreate();
   	space        = dHashSpaceCreate (0);
@@ -661,23 +740,29 @@ int main (int argc, char **argv) {
   	
   	ground = dCreatePlane (space, 0, 0, 1, 0);
 
-  	body[0] = dBodyCreate (world);   	// chassis body
+	cuerpos[0] = Cuerpo(world);
+	body[0] = cuerpos[0].getID(); 
   	
-  	dBodySetPosition (body[0],    0,      0, STARTZ);
+  	cuerpos[0].setPosicion(body[0],    0,      0, STARTZ);
+  		
   	dMassSetBox (&m,              1, LENGTH,  WIDTH, HEIGHT);
   	dMassAdjust (&m,          CMASS);
-  	dBodySetMass  (body[0],      &m);
+  	  	
+  	cuerpos[0].setMasa(body[0],      &m);
   	
   	box[0] = dCreateBox (0,  LENGTH,  WIDTH, HEIGHT);
   	
   	dGeomSetBody   (box[0], body[0]);
 
   	for (i = 1; i < 4; i++) {   	// wheel bodies
-    		body[i] = dBodyCreate (world);
+  		
+  		cuerpos[i] = Cuerpo(world);
+  		body[i] = cuerpos[i].getID(); 
 		
 		dQuaternion q;
 		dQFromAxisAndAngle (      q, 1,      0, 0, M_PI / 2);
-		dBodySetQuaternion (body[i], q);
+			
+		cuerpos[i].setQuaternion(body[i], q);
 		dMassSetSphere (&m,          1, RADIUS);
 		dMassAdjust    (&m,      WMASS);
 		dBodySetMass   (body[i],    &m);
@@ -687,63 +772,49 @@ int main (int argc, char **argv) {
 		dGeomSetBody (sphere[i - 1], body[i]);
 	 }
   	
-  	float lengthEntreDos = LENGTH / 2, widthEntreDos = WIDTH / 2, startZ_MenosHeightEntreDos = STARTZ - HEIGHT / 2;
+  	float lengthEntreDos = LENGTH / 2, 
+  	widthEntreDos = WIDTH / 2, 
+  	startZ_MenosHeightEntreDos = STARTZ - HEIGHT / 2;
   	
-  	dBodySetPosition (body[1],  lengthEntreDos,              0, startZ_MenosHeightEntreDos);
-  	dBodySetPosition (body[2], -lengthEntreDos,  widthEntreDos, startZ_MenosHeightEntreDos);
-  	dBodySetPosition (body[3], -lengthEntreDos, -widthEntreDos, startZ_MenosHeightEntreDos);
-
-  	for (i = 0; i < 3; i++) {   	// front and back wheel hinges
+  	Cuerpo cuerpo1 = Cuerpo();
+  		
+  	cuerpo1.setPosicion(body[1],  lengthEntreDos,              0, startZ_MenosHeightEntreDos);
+  	cuerpo1.setPosicion(body[2], -lengthEntreDos,  widthEntreDos, startZ_MenosHeightEntreDos);
+  	cuerpo1.setPosicion(body[3], -lengthEntreDos, -widthEntreDos, startZ_MenosHeightEntreDos);
+		
+	Junta junta = Junta();	
+		
+  	for (i = 0; i < 3; i++) {   	
     		joint[i] = dJointCreateHinge2 (world, 0);
     		
     		dJointAttach (joint[i], body[0], body[i + 1]);
     		
-    		const dReal *a = dBodyGetPosition (body[i + 1]);
-    		
-    		dJointSetHinge2Anchor (joint[i],  a[0],  a[1], a[2]);
-    		dJointSetHinge2Axes   (joint[i], zunit, yunit);
-  	}
-
-  	for (i = 0; i < 3; i++) {   	// set joint suspension
-    		dJointSetHinge2Param (joint[i], dParamSuspensionERP, 0.4);
-    		dJointSetHinge2Param (joint[i], dParamSuspensionCFM, 0.8);
-  	}
-
-  	for (i = 1; i < 3; i++) {   	// lock back wheels along the steering axis
-    		dJointSetHinge2Param (joint[i],dParamLoStop,0); //,dParamVel,0); // set stops to make sure wheels always stay in alignment
-    		dJointSetHinge2Param (joint[i],dParamHiStop,0); // ,dParamFMax,dInfinity);
-    		/*
-    		// the following alternative method is no good as the wheels may get out
-    		// of alignment:
-    		*/
+    		const dReal *a = dBodyGetPosition(body[i + 1]);
+    		    		
+    		junta.setAnclaBisagra2(joint[i], a[0], a[1], a[2]); 		
+    		junta.setEjesBisagra2(joint[i], zunit, yunit);
+		junta.setParamsBisagra2(joint[i], dParamSuspensionERP, 0.4);		
+    		junta.setParamsBisagra2(joint[i], dParamSuspensionCFM, 0.8);
+    		junta.setParamsBisagra2(joint[i],dParamLoStop,0); 
+    		junta.setParamsBisagra2(joint[i],dParamHiStop,0); 
 	}
 
-  	car_space = dSimpleSpaceCreate (space);   	// create car space and add it to the top level space
-  	dSpaceSetCleanup (car_space, 0);
-  	
-  	dSpaceAdd (car_space,    box[0]);
-  	dSpaceAdd (car_space, sphere[0]);
-  	dSpaceAdd (car_space, sphere[1]);
-  	dSpaceAdd (car_space, sphere[2]);
-
-  	ground_box = dCreateBox (space, 2, 1.5, 1);   	// environment
+	Espacio espacio = Espacio(space);
+	  	
+	car_space = espacio.getID();  	
+	
+	espacio.annade(car_space,    box[0]);
+	espacio.annade(car_space,    sphere[0]);
+	espacio.annade(car_space,    sphere[1]);
+	espacio.annade(car_space,    sphere[2]);
+	
   	dMatrix3 R;
   	dRFromAxisAndAngle (       R, 0, 1,     0, -0.15);
-  	dGeomSetPosition (ground_box, 2, 0, -0.34);
-  	dGeomSetRotation (ground_box, R);
-
-  	int w = 800, h = 600;   	// run simulation
-  	dsSimulationLoop (argc, argv, w, h, &fn);
-
-  	dGeomDestroy (   box[0]);
-  	dGeomDestroy (sphere[0]);
-  	dGeomDestroy (sphere[1]);
-  	dGeomDestroy (sphere[2]);
   	
-  	dJointGroupDestroy (contactgroup);
-  	dSpaceDestroy (space);
-  	dWorldDestroy (world);
-  	dCloseODE();
+  	Caja caja = Caja(space, 2, 2, 1, R); 	//rampa  	
+  	ground_box = caja.getID();
+
+  	dsSimulationLoop (argc, argv, 800, 600, &fn);
   	
   	return 0;
 }
