@@ -11,6 +11,7 @@ class Capsula {
 	char cToString[100]; 
 	float radioCapsula,
 		  largoCapsula;
+	dGeomID ID_Geometrico;
 	
 	void setParamsGeoms(dGeomID pID_GeomCapsula) {									
 			dGeomCapsuleGetParams(pID_GeomCapsula, &radioCapsula, &largoCapsula); //Setter?
@@ -22,8 +23,9 @@ class Capsula {
 			
 		}
 	
-		Capsula(dGeomID pID_GeomCapsula) {
-			setParamsGeoms(pID_GeomCapsula);
+		Capsula(dSpaceID pID_Espacio, float pLadoX, float pLadoY) {
+			ID_Geometrico = dCreateCapsule(pID_Espacio, pLadoX, pLadoY); 
+			setParamsGeoms(ID_Geometrico);			
 			
 			sprintf(cToString, "Capsula: {radio = %f, largo = %f}\n\n", getRadio(), getLargo());
 		}
@@ -42,6 +44,10 @@ class Capsula {
 		
 		float getLargo() {
 			return largoCapsula;
+		}
+		
+		dGeomID getID_Geometrico() {
+			return ID_Geometrico;
 		}
 		//////////// fin getter ///////////////
 			
@@ -228,12 +234,12 @@ class Geometria {
 	char cToString[20];
 
 	public:
-		Geometria(dGeomID ID_GeomCapsula, dBodyID ID_Cuerpo) {
-			dGeomSetBody(ID_GeomCapsula, ID_Cuerpo); 
+		Geometria(dGeomID pID_GeomCapsula, dBodyID pID_Cuerpo, dSpaceID ID_Espacio, float ladoX, float ladoY) {					
+			dGeomSetBody(pID_GeomCapsula, pID_Cuerpo); 
 		
 			sprintf(cToString, "Geometria: {}\n\n");
 		}
-		
+				
 		char* toString() {
 			return cToString;
 		}
@@ -276,13 +282,13 @@ static void start() {
 	dBodyID ID_Cuerpo = cuerpo.getID();  			
 		
 	Masa masa = Masa(ID_Cuerpo, 5.0, 3, ladoX, ladoY);
-		
-	ID_GeomCapsula = dCreateCapsule(ID_Espacio, ladoX, ladoY); 
+			   
+	capsula = Capsula(ID_Espacio, ladoX, ladoY);   
 	   
-	Geometria geometria = Geometria(ID_GeomCapsula, ID_Cuerpo);
+	ID_GeomCapsula = capsula.getID_Geometrico();	   
+	   
+	Geometria geometria = Geometria(ID_GeomCapsula, ID_Cuerpo, ID_Espacio, ladoX, ladoY);
 	   	
-	capsula = Capsula(ID_GeomCapsula);
-	
 	printf("%s%s%s%s%s%s", cam.toString(), 
 						   matriz.toString(), 
 						   cuerpo.toString(),
