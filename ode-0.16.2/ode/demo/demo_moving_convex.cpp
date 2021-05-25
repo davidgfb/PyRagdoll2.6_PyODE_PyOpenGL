@@ -23,13 +23,17 @@ class Capsula {
 			
 		}
 	
-		Capsula(dSpaceID pID_Espacio, float pLadoX, float pLadoY) {
-			ID_Geometrico = dCreateCapsule(pID_Espacio, pLadoX, pLadoY); 
+		Capsula(dSpaceID pID_Espacio, float pRadio, float pLargo) {
+			ID_Geometrico = dCreateCapsule(pID_Espacio, pRadio, pLargo); 
 			setParamsGeoms(ID_Geometrico);			
 			
 			sprintf(cToString, "Capsula: {radio = %f, largo = %f}\n\n", getRadio(), getLargo());
 		}
 		////////////// fin constructor ////////////
+		
+		void dibuja() {
+			dsDrawCapsule(dGeomGetPosition(ID_GeomCapsula), 				  	      dGeomGetRotation(ID_GeomCapsula), 				          getLargo(), 					  					  	      getRadio());
+		}
 		
 		/////////////// setter ///////////////		
 		void setID_GeomCapsula(dGeomID pID_GeomCapsula) {
@@ -147,10 +151,6 @@ class Contacto {
 		}
 };
 
-class Mundo {
-
-};
-
 class Cuerpo {
 	char cToString[15];
 	dBodyID ID;
@@ -203,10 +203,6 @@ class Matriz {
 		char* toString() {
 			return cToString;
 		}
-};
-
-class Espacio {
-
 };
 
 class Masa {
@@ -264,8 +260,8 @@ Cuerpo cuerpo;
 static void start() {
 	float pos[3] = {-5.0,   0.0, 5.0},
 		  rot[3] = { 0.0, -45.0, 0.0}, //tilt,pan,roll
-		  ladoX = 1.0, 
-		  ladoY = 2.0; 	
+		  radioCapsula = 1.0, 
+		  largoCapsula = 2.0; 	
 		  
 	dReal xCuerpo = 0, yCuerpo = 0, zCuerpo = 3;
 		  	
@@ -280,14 +276,20 @@ static void start() {
 												  zCuerpo);
 
 	dBodyID ID_Cuerpo = cuerpo.getID();  			
-		
-	Masa masa = Masa(ID_Cuerpo, 5.0, 3, ladoX, ladoY);
-			   
-	capsula = Capsula(ID_Espacio, ladoX, ladoY);   
+					   
+	capsula = Capsula(ID_Espacio, radioCapsula, 
+								  largoCapsula); 
+	/*
+	radioCapsula = capsula.getRadio(),
+	largoCapsula = capsula.getLargo();  
+	*/
+								  
+	Masa masa = Masa(ID_Cuerpo, 5.0, 3, radioCapsula, 
+										largoCapsula);
 	   
 	ID_GeomCapsula = capsula.getID_Geometrico();	   
 	   
-	Geometria geometria = Geometria(ID_GeomCapsula, ID_Cuerpo, ID_Espacio, ladoX, ladoY);
+	Geometria geometria = Geometria(ID_GeomCapsula, ID_Cuerpo, ID_Espacio, radioCapsula, largoCapsula);
 	   	
 	printf("%s%s%s%s%s%s", cam.toString(), 
 						   matriz.toString(), 
@@ -297,17 +299,46 @@ static void start() {
 						   capsula.toString());
 }
 
-void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show_aabb) {	
-		dsDrawCapsule(dGeomGetPosition(ID_GeomCapsula), 					  dGeomGetRotation(ID_GeomCapsula), 					  capsula.getLargo(), 					  						  capsula.getRadio());		
-}
-
 static void simLoop(int pause) {
 	dSpaceCollide(ID_Espacio, 0, &nearCallback); //sin esto no hay colisiones
 	dWorldQuickStep(ID_Mundo, 0.05); //entra bucle	
 	dJointGroupEmpty(ID_GrupoJuntas); //sin esto rebota y elimina g
 	
-	drawGeom(ID_GeomCapsula, 0, 0, 0); //pinta 
+	capsula.dibuja();
 }
+
+class Plano {
+	public:
+		Plano(dSpaceID espacio, dReal a, dReal b, dReal c, dReal d) {
+			dCreatePlane(ID_Espacio, 0, 0, 1, 0);
+		}
+};
+
+class Mundo {
+	dWorldID ID;
+	
+	public:
+		Mundo() {
+			ID = dWorldCreate();
+		}
+		
+		dWorldID getID() {
+			return ID;
+		}
+};
+
+class Espacio {
+	dSpaceID ID;
+	
+	public:
+		Espacio() {
+			ID = dSimpleSpaceCreate(0);
+		}
+		
+		dSpaceID getID() {
+			return ID;
+		}
+};
 
 int main(int argc, char **argv) {
 	dsFunctions fn;
@@ -319,13 +350,19 @@ int main(int argc, char **argv) {
 	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
 
 	dInitODE2(0);
-	ID_Mundo = dWorldCreate();
+	
+	Mundo mundo = Mundo();
+	
+	ID_Mundo = mundo.getID();
 
-	ID_Espacio = dSimpleSpaceCreate(0);
+	Espacio espacio = Espacio();
+	ID_Espacio = espacio.getID(); //objeto.getID() padre
+		
 	ID_GrupoJuntas = dJointGroupCreate(0);
 	dWorldSetGravity(ID_Mundo, 0, 0, -10 );
 	//dWorldSetCFM(world, 1e-5);
-	dCreatePlane(ID_Espacio, 0, 0, 1, 0);
+	
+	Plano plano = Plano(ID_Espacio, 0, 0, 1, 0);
 
 	dsSimulationLoop(argc, argv, 1000, 1000, &fn); //fundamental
 	
