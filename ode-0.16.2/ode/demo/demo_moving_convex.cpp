@@ -1,29 +1,13 @@
 #include <ode/ode.h>
 #include <drawstuff/drawstuff.h>
 
-dWorldID world;
-dSpaceID space;
+dWorldID ID_Mundo;
+dSpaceID ID_Espacio;
 dGeomID ID_GeomCapsula; //puntero a struct vacio dxGeom
-dJointGroupID contactgroup;
+dJointGroupID ID_GrupoJuntas;
 
-static void nearCallback(void *data, dGeomID o, dGeomID o1) {
-	dContact contact[1], //es un struct  		
-		     contacto = contact[0];
-		
-	contacto.surface.mode = 20; //dContactBounce + dContactSoftCFM
-	contacto.surface.mu = dInfinity;
-	contacto.surface.mu2 = 0;
-	contacto.surface.bounce = 0.1;
-	contacto.surface.bounce_vel = 0.1;
-	contacto.surface.soft_cfm = 0.01;
-		
-	dCollide(o, o1, 1, &contact[0].geom, sizeof(dContact));
-		//&contact[0] != &contacto
-	dRSetIdentity(new dMatrix3);
-			
-	dJointAttach(dJointCreateContact(world, contactgroup, contact), dGeomGetBody(o), dGeomGetBody(o1));		
-}
-
+////////////////// Clases //////////////////////
+//////////////////// Capsula //////////////////
 class Capsula { 
 	char cToString[100]; 
 	float radioCapsula,
@@ -46,7 +30,7 @@ class Capsula {
 		}
 		////////////// fin constructor ////////////
 		
-		/////////////// setter /////////////////		
+		/////////////// setter ///////////////		
 		void setID_GeomCapsula(dGeomID pID_GeomCapsula) {
 			ID_GeomCapsula = pID_GeomCapsula;
 		}
@@ -66,12 +50,14 @@ class Capsula {
 			return cToString;
 		}
 };
+//////////////////// fin Capsula //////////////////
 
 Capsula capsula; //no se ha inicializado pero ha usado constructor vacio tiene que declararse debajo de la def clase
 
+//////////////// Camara /////////////////////
 class Camara {
 	float pos[3], //unidades x,y,z
-		  rot[3]; //angulos alfa,beta,gamma
+	      rot[3]; //angulos alfa,beta,gamma
 	char cToString[200]; 
 	
 	public:
@@ -80,6 +66,8 @@ class Camara {
 				pos[posicion] = p_Pos[posicion];
 				rot[posicion] = pRot[posicion];
 			} 	
+			
+			dsSetViewpoint(p_Pos, pRot);
 			
 			sprintf(cToString, "Camara: {x = %f, y = %f, z = %f,\nalfa = %f, beta = %f, gamma = %f}\n\n", 
 					getX(), getY(), getZ(),
@@ -119,56 +107,113 @@ class Camara {
 			return cToString;
 		}
 };
+//////////////// fin Camara /////////////////////
 
-/*
-char* arrayFloats_A_ArrayChars(float arrayFloats[]) {
-	char arrayChars[50];
-  	int n = sprintf(arrayChars, "%f", arrayFloats); //len(arrayChars)
-  	
-	return arrayChars;
+class Contacto {
+	char cToString[200]; 
+	dContact *arrayContactos;
+
+	public:
+		Contacto() {
+
+		}
+				
+		Contacto(dContact pArrayContactos[1]) {			
+			dContact arrayContactos0 = pArrayContactos[0];
+			
+			arrayContactos0.surface.mode = 20; //dContactBounce + dContactSoftCFM
+			arrayContactos0.surface.mu = dInfinity;
+			arrayContactos0.surface.mu2 = 0;
+			arrayContactos0.surface.bounce = 0.1;
+			arrayContactos0.surface.bounce_vel = 0.1;
+			arrayContactos0.surface.soft_cfm = 0.01;
+						
+			arrayContactos = pArrayContactos;
+			
+			sprintf(cToString, "Contacto: {modoSuperficie = %i, coefFriccCoulomb = %f, coefFriccCoulombDir = %f, rebote = %f, vRebote = %f, suavidadContactoNormal = %f}\n\n", arrayContactos0.surface.mode, 
+									   arrayContactos0.surface.mu, 
+									   arrayContactos0.surface.mu2,
+									   arrayContactos0.surface.bounce,
+									   arrayContactos0.surface.bounce_vel,
+									   arrayContactos0.surface.soft_cfm);
+		}
+				
+		char* toString() {
+			return cToString;
+		}
+};
+
+class Cuerpo {
+	char cToString[15];
+	dBodyID ID;
+	
+	public:
+		Cuerpo() {
+		
+		}
+	
+		Cuerpo(dWorldID ID_Mundo) {
+			ID = dBodyCreate(ID_Mundo); 
+			
+			sprintf(cToString, "Cuerpo: {}\n\n");
+		}
+			
+		dBodyID getID() {
+			return ID;
+		}
+		
+		char* toString() {
+			return cToString;
+		}
+};
+////////////////// fin Clases //////////////////////
+
+Contacto contacto;
+
+static void nearCallback(void *data, dGeomID o, dGeomID o1) {	
+	dContact arrayContactos[1]; //es un struct  		
+		
+	contacto = Contacto(arrayContactos); //se reutiliza 
+	//printf("%s", contacto.toString());	
+		
+	dCollide(o, o1, 1, &arrayContactos[0].geom, sizeof(dContact)); //requiere puntero array //&contact[0] != &contacto
+			
+	dJointAttach(dJointCreateContact(ID_Mundo, ID_GrupoJuntas, arrayContactos), dGeomGetBody(o), dGeomGetBody(o1));		
 }
-*/
+
+Cuerpo cuerpo;
 
 static void start() {
-	float xyz[3] = {-5.0,   0.0, 5.0},
-		  tpr[3] = { 0.0, -45.0, 0.0}, //tilt,pan,roll
+	float pos[3] = {-5.0,   0.0, 5.0},
+		  rot[3] = { 0.0, -45.0, 0.0}, //tilt,pan,roll
 		  ladoX = 1.0, 
 		  ladoY = 2.0; 	
-		  
-	Camara cam = Camara(xyz, tpr);
-	printf("%s", cam.toString());		
-	
-	/*
-	printf("%sx = %f, y = %f, z = %f}\n", cam.toString(), cam.getX(), cam.getY(), cam.getZ());
-	*/
-	/*
-	for (int pos = 0; pos < 3; pos++) {
-		printf("%f", );
-	}
-	*/
-	//printf("%s\n", (char*) cam.getPos());		  
+		  	
+	Camara cam = Camara(pos, rot);
+	printf("%s", cam.toString());		 
 		  			
 	dMass m;				
 	dMatrix3 R; //float a[3]
-	dBodyID obj = dBodyCreate(world);  	
+			
+	cuerpo = Cuerpo(ID_Mundo);
+	printf("%s", cuerpo.toString());	
 
-	dsSetViewpoint(xyz, tpr);
-	dBodySetPosition(obj, 0, 0, 3);	
+	dBodyID ID_Cuerpo = cuerpo.getID();  
+
+	dBodySetPosition(ID_Cuerpo, 0, 0, 3);	
 	dRFromAxisAndAngle(R, 0.0, 0.0, 0.0, 0.0);				
-	dBodySetRotation(obj, R); 
-	dBodySetData(obj, (void*) (dsizeint) 0); 
+	dBodySetRotation(ID_Cuerpo, R); 
+	dBodySetData(ID_Cuerpo, (void*) (dsizeint) 0); 
 
 	dMassSetCapsule(&m, 5.0, 3, ladoX, ladoY);
 	
-	ID_GeomCapsula = dCreateCapsule(space, ladoX, ladoY); 
+	ID_GeomCapsula = dCreateCapsule(ID_Espacio, ladoX, ladoY); 
 	   
-	dGeomSetBody(ID_GeomCapsula, obj); 
-	dBodySetMass(obj, &m); 
+	dGeomSetBody(ID_GeomCapsula, ID_Cuerpo); 
+	dBodySetMass(ID_Cuerpo, &m); 
 	
-	capsula = Capsula(ID_GeomCapsula); //ID_GeomCapsula
-		
+	capsula = Capsula(ID_GeomCapsula); 		
 	printf("%s\n", capsula.toString());
-	//printf("%p\n", capsula.getID_GeomCapsula());
 }
 
 void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show_aabb) {	
@@ -176,9 +221,9 @@ void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show
 }
 
 static void simLoop(int pause) {
-	dSpaceCollide(space, 0, &nearCallback); //sin esto no hay colisiones
-	dWorldQuickStep(world, 0.05); //entra bucle	
-	dJointGroupEmpty(contactgroup); //sin esto rebota y elimina g
+	dSpaceCollide(ID_Espacio, 0, &nearCallback); //sin esto no hay colisiones
+	dWorldQuickStep(ID_Mundo, 0.05); //entra bucle	
+	dJointGroupEmpty(ID_GrupoJuntas); //sin esto rebota y elimina g
 	
 	drawGeom(ID_GeomCapsula, 0, 0, 0); //pinta 
 }
@@ -193,13 +238,13 @@ int main(int argc, char **argv) {
 	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
 
 	dInitODE2(0);
-	world = dWorldCreate();
+	ID_Mundo = dWorldCreate();
 
-	space = dSimpleSpaceCreate(0);
-	contactgroup = dJointGroupCreate(0);
-	dWorldSetGravity(world, 0, 0, -10 );
+	ID_Espacio = dSimpleSpaceCreate(0);
+	ID_GrupoJuntas = dJointGroupCreate(0);
+	dWorldSetGravity(ID_Mundo, 0, 0, -10 );
 	//dWorldSetCFM(world, 1e-5);
-	dCreatePlane(space, 0, 0, 1, 0);
+	dCreatePlane(ID_Espacio, 0, 0, 1, 0);
 
 	dsSimulationLoop(argc, argv, 1000, 1000, &fn); //fundamental
 	
