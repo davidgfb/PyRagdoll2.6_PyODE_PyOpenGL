@@ -7,7 +7,6 @@ dGeomID ID_GeomCapsula; //puntero a struct vacio dxGeom
 dJointGroupID ID_GrupoJuntas;
 
 ////////////////// Clases //////////////////////
-//////////////////// Capsula //////////////////
 class Capsula { 
 	char cToString[100]; 
 	float radioCapsula,
@@ -26,7 +25,7 @@ class Capsula {
 		Capsula(dGeomID pID_GeomCapsula) {
 			setParamsGeoms(pID_GeomCapsula);
 			
-			sprintf(cToString, "Capsula: {radio = %f, largo = %f}\n", getRadio(), getLargo());
+			sprintf(cToString, "Capsula: {radio = %f, largo = %f}\n\n", getRadio(), getLargo());
 		}
 		////////////// fin constructor ////////////
 		
@@ -50,7 +49,6 @@ class Capsula {
 			return cToString;
 		}
 };
-//////////////////// fin Capsula //////////////////
 
 Capsula capsula; //no se ha inicializado pero ha usado constructor vacio tiene que declararse debajo de la def clase
 
@@ -118,15 +116,15 @@ class Contacto {
 
 		}
 				
-		Contacto(dContact pArrayContactos[1]) {			
+		Contacto(dContact pArrayContactos[1], int pModoSup, float pCoefFriccCoulomb, float pCoefFriccCoulombDir, float pRebote, float pV_Rebote, float pSuavidadContactoNormal) {			
 			dContact arrayContactos0 = pArrayContactos[0];
 			
-			arrayContactos0.surface.mode = 20; //dContactBounce + dContactSoftCFM
-			arrayContactos0.surface.mu = dInfinity;
-			arrayContactos0.surface.mu2 = 0;
-			arrayContactos0.surface.bounce = 0.1;
-			arrayContactos0.surface.bounce_vel = 0.1;
-			arrayContactos0.surface.soft_cfm = 0.01;
+			arrayContactos0.surface.mode = pModoSup; //dContactBounce + dContactSoftCFM
+			arrayContactos0.surface.mu = pCoefFriccCoulomb;
+			arrayContactos0.surface.mu2 = pCoefFriccCoulomb;
+			arrayContactos0.surface.bounce = pRebote;
+			arrayContactos0.surface.bounce_vel = pV_Rebote;
+			arrayContactos0.surface.soft_cfm = pSuavidadContactoNormal; //suavidadContactoNormal = pSuavidadContactoNormal
 						
 			arrayContactos = pArrayContactos;
 			
@@ -143,6 +141,10 @@ class Contacto {
 		}
 };
 
+class Mundo {
+
+};
+
 class Cuerpo {
 	char cToString[15];
 	dBodyID ID;
@@ -152,14 +154,82 @@ class Cuerpo {
 		
 		}
 	
-		Cuerpo(dWorldID ID_Mundo) {
-			ID = dBodyCreate(ID_Mundo); 
+		Cuerpo(dWorldID pID_Mundo, dMatrix3 R, dReal x, dReal y, dReal z) {
+			ID = dBodyCreate(pID_Mundo); 
+			
+			dBodySetPosition(ID, x, y, z);		
+			dBodySetRotation(ID, R); 
+			dBodySetData(ID, (void*) 0); //puntero vacio a 0
 			
 			sprintf(cToString, "Cuerpo: {}\n\n");
 		}
 			
 		dBodyID getID() {
 			return ID;
+		}
+		
+		char* toString() {
+			return cToString;
+		}
+};
+
+class Objeto {
+
+};
+
+class Matriz {
+	char cToString[20];
+	dReal* R;
+
+	public:
+		Matriz() {
+		
+		}
+		
+		Matriz(dMatrix3 pR) {
+			R = pR;
+				
+			sprintf(cToString, "Matriz: {}\n\n");
+		}
+		
+		void rotaRadianesEnEje(dReal x, dReal y, dReal z, dReal anguloRadianes) {
+			dRFromAxisAndAngle(R, x, y, z, anguloRadianes);
+		}
+		
+		dReal* getMatriz() {
+			return R;
+		}
+		
+		char* toString() {
+			return cToString;
+		}
+};
+
+class Espacio {
+
+};
+
+class Masa {
+	char cToString[20];
+	dMass masa;
+
+	public:
+		Masa() {
+		
+		}
+	
+		Masa(dMass pMasa) {
+			masa = pMasa;
+			
+			sprintf(cToString, "Masa: {}\n\n");
+		}
+		
+		void setCapsula(dReal densidad, int direccion, float ladoX, float ladoY) {
+			dMassSetCapsule(&masa, densidad, direccion, ladoX, ladoY);
+		}
+		
+		void setMasa(dBodyID ID_Cuerpo) {
+			dBodySetMass(ID_Cuerpo, &masa); 
 		}
 		
 		char* toString() {
@@ -173,7 +243,7 @@ Contacto contacto;
 static void nearCallback(void *data, dGeomID o, dGeomID o1) {	
 	dContact arrayContactos[1]; //es un struct  		
 		
-	contacto = Contacto(arrayContactos); //se reutiliza 
+	contacto = Contacto(arrayContactos, 20, dInfinity, 0.0, 0.1, 0.1, 0.01); //se reutiliza 
 	//printf("%s", contacto.toString());	
 		
 	dCollide(o, o1, 1, &arrayContactos[0].geom, sizeof(dContact)); //requiere puntero array //&contact[0] != &contacto
@@ -188,32 +258,38 @@ static void start() {
 		  rot[3] = { 0.0, -45.0, 0.0}, //tilt,pan,roll
 		  ladoX = 1.0, 
 		  ladoY = 2.0; 	
+		  
+	dReal xCuerpo = 0, yCuerpo = 0, zCuerpo = 3;
 		  	
 	Camara cam = Camara(pos, rot);
 	printf("%s", cam.toString());		 
-		  			
+			  		  			
 	dMass m;				
-	dMatrix3 R; //float a[3]
-			
-	cuerpo = Cuerpo(ID_Mundo);
+	dMatrix3 R; 
+	
+	Masa masa = Masa(m);
+	printf("%s",masa.toString());
+	
+	Matriz matriz = Matriz(R);	  
+    printf("%s", matriz.toString());	
+		
+	matriz.rotaRadianesEnEje(0.0, 0.0, 0.0, 0.0);
+				
+	cuerpo = Cuerpo(ID_Mundo, matriz.getMatriz(), xCuerpo, yCuerpo, zCuerpo);
 	printf("%s", cuerpo.toString());	
 
-	dBodyID ID_Cuerpo = cuerpo.getID();  
-
-	dBodySetPosition(ID_Cuerpo, 0, 0, 3);	
-	dRFromAxisAndAngle(R, 0.0, 0.0, 0.0, 0.0);				
-	dBodySetRotation(ID_Cuerpo, R); 
-	dBodySetData(ID_Cuerpo, (void*) (dsizeint) 0); 
-
-	dMassSetCapsule(&m, 5.0, 3, ladoX, ladoY);
+	dBodyID ID_Cuerpo = cuerpo.getID();  			
+		
+	masa.setCapsula(5.0, 3, ladoX, ladoY);
 	
 	ID_GeomCapsula = dCreateCapsule(ID_Espacio, ladoX, ladoY); 
 	   
 	dGeomSetBody(ID_GeomCapsula, ID_Cuerpo); 
-	dBodySetMass(ID_Cuerpo, &m); 
+
+	masa.setMasa(ID_Cuerpo);
 	
 	capsula = Capsula(ID_GeomCapsula); 		
-	printf("%s\n", capsula.toString());
+	printf("%s", capsula.toString());
 }
 
 void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show_aabb) {	
