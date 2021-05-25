@@ -179,16 +179,10 @@ class Objeto {
 
 class Matriz {
 	char cToString[20];
-	dReal* R;
+	dMatrix3 R;
 
-	public:
-		Matriz() {
-		
-		}
-		
-		Matriz(dMatrix3 pR) {
-			R = pR;
-				
+	public:		
+		Matriz() {				
 			sprintf(cToString, "Matriz: {}\n\n");
 		}
 		
@@ -218,18 +212,26 @@ class Masa {
 		
 		}
 	
-		Masa(dMass pMasa) {
-			masa = pMasa;
-			
+		Masa(dBodyID pID_Cuerpo, dReal pDensidad, int pDireccion, float pLadoX, float pLadoY) {
+			dMassSetCapsule(&masa, pDensidad, pDireccion, pLadoX, pLadoY);
+			dBodySetMass(pID_Cuerpo, &masa); 
+						
 			sprintf(cToString, "Masa: {}\n\n");
 		}
-		
-		void setCapsula(dReal densidad, int direccion, float ladoX, float ladoY) {
-			dMassSetCapsule(&masa, densidad, direccion, ladoX, ladoY);
+				
+		char* toString() {
+			return cToString;
 		}
+};
+
+class Geometria {
+	char cToString[20];
+
+	public:
+		Geometria(dGeomID ID_GeomCapsula, dBodyID ID_Cuerpo) {
+			dGeomSetBody(ID_GeomCapsula, ID_Cuerpo); 
 		
-		void setMasa(dBodyID ID_Cuerpo) {
-			dBodySetMass(ID_Cuerpo, &masa); 
+			sprintf(cToString, "Geometria: {}\n\n");
 		}
 		
 		char* toString() {
@@ -262,34 +264,31 @@ static void start() {
 	dReal xCuerpo = 0, yCuerpo = 0, zCuerpo = 3;
 		  	
 	Camara cam = Camara(pos, rot);
-	printf("%s", cam.toString());		 
-			  		  			
-	dMass m;				
-	dMatrix3 R; 
-	
-	Masa masa = Masa(m);
-	printf("%s",masa.toString());
-	
-	Matriz matriz = Matriz(R);	  
-    printf("%s", matriz.toString());	
+			  		  					
+	Matriz matriz = Matriz();	  
 		
 	matriz.rotaRadianesEnEje(0.0, 0.0, 0.0, 0.0);
 				
-	cuerpo = Cuerpo(ID_Mundo, matriz.getMatriz(), xCuerpo, yCuerpo, zCuerpo);
-	printf("%s", cuerpo.toString());	
+	cuerpo = Cuerpo(ID_Mundo, matriz.getMatriz(), xCuerpo, 
+												  yCuerpo, 
+												  zCuerpo);
 
 	dBodyID ID_Cuerpo = cuerpo.getID();  			
 		
-	masa.setCapsula(5.0, 3, ladoX, ladoY);
-	
+	Masa masa = Masa(ID_Cuerpo, 5.0, 3, ladoX, ladoY);
+		
 	ID_GeomCapsula = dCreateCapsule(ID_Espacio, ladoX, ladoY); 
 	   
-	dGeomSetBody(ID_GeomCapsula, ID_Cuerpo); 
-
-	masa.setMasa(ID_Cuerpo);
+	Geometria geometria = Geometria(ID_GeomCapsula, ID_Cuerpo);
+	   	
+	capsula = Capsula(ID_GeomCapsula);
 	
-	capsula = Capsula(ID_GeomCapsula); 		
-	printf("%s", capsula.toString());
+	printf("%s%s%s%s%s%s", cam.toString(), 
+						   matriz.toString(), 
+						   cuerpo.toString(),
+						   masa.toString(), 
+						   geometria.toString(), 
+						   capsula.toString());
 }
 
 void drawGeom(dGeomID ID_GeomCapsula, const dReal *pos, const dReal *R, int show_aabb) {	
