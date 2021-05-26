@@ -23,6 +23,13 @@ dJointGroupID ID_GrupoJunta;
 dGeomID ID_GeomSuelo, 	 
 	ID_GeomRampa;
 dSpaceID ID_Espacio;
+float dxCaja = 2,
+	  	dyCaja = 2,
+	  	dzCaja = 1,
+	  	xCaja = 2,
+	  	yCaja = 0,
+	  	zCaja = 0.34,
+	  	posCaja[3] = {2, 0, -0.34};
 
 Coche coche;
 
@@ -94,14 +101,12 @@ void simLoop (int pause) { // simulation loop
   	dVector3 dimensionesLateralesCaja;
   	dGeomBoxGetLengths(ID_GeomRampa, dimensionesLateralesCaja);
   	
-  	dsDrawBox (dGeomGetPosition(ID_GeomRampa), dGeomGetRotation(ID_GeomRampa), dimensionesLateralesCaja);
+  	dsDrawBox(posCaja, dGeomGetRotation(ID_GeomRampa), dimensionesLateralesCaja);
 }
 
-//clase Coche, Moto...
+//clase Moto...
 
 int main(int argc, char **argv) {  	
-  	
-
   	dsFunctions llamadas_Simulacion;
   	
   	llamadas_Simulacion.version = DS_VERSION;
@@ -125,11 +130,11 @@ int main(int argc, char **argv) {
 
   	dMatrix3 R;
   	dRFromAxisAndAngle (R, 0, 1, 0, -0.15);
-  	
-  	Caja caja = Caja(ID_Espacio, 2, 2, 1, R); 	//rampa  	
+  		
+  	Caja caja = Caja(ID_Espacio, dxCaja, dyCaja, dzCaja, xCaja, yCaja, zCaja, R); 	//rampa  	
   	ID_GeomRampa = caja.getID();
 
-  	dsSimulationLoop (argc, argv, 800, 600, &llamadas_Simulacion);
+  	dsSimulationLoop(argc, argv, 800, 600, &llamadas_Simulacion);
   	  	
   	return 0;
 }

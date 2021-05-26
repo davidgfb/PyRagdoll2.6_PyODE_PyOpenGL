@@ -2,9 +2,9 @@ class Caja {
 	dGeomID ID;
 
 	public:
-		Caja(dSpaceID pID_Espacio, dReal dx, dReal dy, dReal dz, dMatrix3 R) {
+		Caja(dSpaceID pID_Espacio, dReal dx, dReal dy, dReal dz, dReal x, dReal y, dReal z, dMatrix3 R) {
 			ID = dCreateBox(pID_Espacio, dx, dy, dz);   
-			dGeomSetPosition(ID, 2, 0, -0.34);
+			dGeomSetPosition(ID, x, y, z);
   			dGeomSetRotation(ID, R);
 		}
 		
