@@ -7,7 +7,6 @@ this also shows you how to use geom groups.
 #include "texturepath.h"
 #include "Ragdoll.h"
 
-//////////// variables ////////////////////
 float   LENGTH = 0.7, 
 	WIDTH = 0.5, 
 	HEIGHT = 0.2, 
@@ -16,18 +15,17 @@ float   LENGTH = 0.7,
 	CMASS = 1.0, 
 	WMASS = 0.2; // some constants
 
-static const dVector3   yunit = {0, 1, 0}, 
+dVector3 yunit = {0, 1, 0}, 
 			zunit = {0, 0, 1};
 
-static dWorldID ID_Mundo; // dynamics and collision objects (chassis, 3 wheels, environment)
-static dSpaceID ID_Espacio, ID_EspacioCoche;
-static dBodyID IDs_Cuerpos[4];
-static dJointID IDs_Juntas[3]; 
-static dJointGroupID contactgroup;
-static dGeomID ground, ID_GeomCaja[1], IDs_GeomsEsferas[3], ID_GeomRampa;
-static dReal    speed = 0, 
+dWorldID ID_Mundo; // dynamics and collision objects (chassis, 3 wheels, environment)
+dSpaceID ID_Espacio, ID_EspacioCoche;
+dBodyID IDs_Cuerpos[4];
+dJointID IDs_Juntas[3]; 
+dJointGroupID ID_GrupoJunta;
+dGeomID ground, ID_GeomsCajas[1], IDs_GeomsEsferas[3], ID_GeomRampa;
+dReal speed = 0, 
 		steer = 0; // things that the user controls // user commands
-///////////////////////////////////////////
 
 //////////////// variables ragdoll /////////////
 float R_ELBOW_POS[3],
@@ -43,6 +41,7 @@ float R_ELBOW_POS[3],
 	L_TOES_POS[3];
 ////////////////////////////////////////////////
 
+///////////// ragdoll //////////////////
 bool esPositivo(float x) {
 	bool positivo = false;
 
@@ -53,8 +52,6 @@ bool esPositivo(float x) {
 	return positivo;
 }
 
-
-///////////// ragdoll //////////////////
 float sign(float x) { //sentido bool
 	//Returns 1.0 if x is positive, -1.0 if x is negative or zero.
 	float valor = -1.0; // (x <= 0.0), x E (-inf, 0]
@@ -92,29 +89,27 @@ float matriz3[3],
 	matriz9[9],
 	matriz16[16];
 		
-float* neg3(float v[3]) { //no devuelve nada haz una copia antes
+float* neg3(float v[3]) { 
 	//the negation of 3-vector v.
 	float matrizNegada1[3] = {-v[0], -v[1], -v[2]};
 	
-	asigna_Array(matriz3,
-			matrizNegada1,3);
+	asigna_Array(matriz3, matrizNegada1,3);
 			
 	return matriz3;
 }
 
-float* add3(float a[3], float b[3]) { //modifica a haz una copia
+float* add3(float a[3], float b[3]) { 
 	//the sum of 3-vectors a and b.
 	float matrizSuma1[3] = {a[0] + b[0],
 				a[1] + b[1],
 				a[2] + b[2]};
 				
-	asigna_Array(matriz3,
-			matrizSuma1,3);
+	asigna_Array(matriz3, matrizSuma1,3);
 				
 	return matriz3;
 }
 
-float* sub3(float a[3], float b[3]) { //modifica a haz una copia
+float* sub3(float a[3], float b[3]) { 
 	//the difference between 3-vectors a and b.
 	return add3(a, neg3(b));
 }
@@ -125,8 +120,7 @@ float* mul3(float v[3], float s) {
 					v[1] * s,
 					v[2] * s};
 					
-	asigna_Array(matriz3,
-			matrizMultiplicada1, 3);
+	asigna_Array(matriz3, matrizMultiplicada1, 3);
 	
 	return matriz3;
 }
@@ -148,14 +142,12 @@ float* norm3(float v[3]) {
 	if (esPositivo(l)) { 
 		float *matrizDividida = div3(v, l);
 		
-		asigna_Array(matriz3,
-			matrizDividida,3);
+		asigna_Array(matriz3, matrizDividida, 3);
 		
 	} else {
 		float matrizCeros[3] = {0.0, 0.0, 0.0};
 		
-		asigna_Array(matriz3,
-			matrizCeros,3);
+		asigna_Array(matriz3, matrizCeros,3);
 	}
 	
 	return matriz3;
@@ -175,8 +167,7 @@ float* cross(float a[3], float b[3]) {
 				       a[2] * b[0] - b[2] * a[0],
 				       a[0] * b[1] - b[0] * a[1]};
 	
-	asigna_Array(matriz3,
-		     matrizVectorizada1,3);
+	asigna_Array(matriz3, matrizVectorizada1, 3);
 	
 	return matriz3;
 }
@@ -190,7 +181,8 @@ float* project3(float v[3], float d[3]) {
 
 float acosdot3(float a[3], float b[3]) {
 	//Returns the angle between unit 3-vectors a and b.
-	float x = dot3(a, b), valor = 0.0; // valor E (0, inf)
+	float x = dot3(a, b), 
+		valor = 0.0; // valor E (0, inf)
 	
 	if (x < -1.0) { //llama
 		valor = M_PI;
@@ -209,8 +201,7 @@ float* invert3x3(float m[9]) {
 				      m[1],m[4],m[7],
 				      m[2],m[5],m[8]};
 	
-	asigna_Array(matriz9,
-		     matrizInvertida1,9);
+	asigna_Array(matriz9, matrizInvertida1, 9);
 	
 	return matriz9;
 }
@@ -221,7 +212,7 @@ float* rotate3(float m[9], float v[3]) {
 	     v[0] * m[3] + v[1] * m[4] + v[2] * m[5],
  	     v[0] * m[6] + v[1] * m[7] + v[2] * m[8]};
  	     
- 	asigna_Array(matriz3,matrizRotada31,3);     
+ 	asigna_Array(matriz3, matrizRotada31, 3);     
  	     
  	return matriz3;     
 }
@@ -230,7 +221,7 @@ float* zaxis(float m[9]) {
 	//the z-axis vector from 3x3 (row major) rotation matrix m.
 	float ejeZ1[9]; 
 	
-	asigna_Array(matriz9,ejeZ1,9); //inicializa ejeZ importante!
+	asigna_Array(matriz9, ejeZ1, 9); //inicializa ejeZ importante!
 		
 	matriz9[0] = m[2];
 	matriz9[1] = m[5];
@@ -277,49 +268,50 @@ float* makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> 
 			r[5],r[8],0.0,
 			p[0],p[1],p[2],1.0};
 			
-	asigna_Array(matriz16,s,16); 
+	asigna_Array(matriz16, s, 16); 
 		
 	return matriz16;
 }
 
 //obsoleto?
 void asigna_Array3(float array[3], float array1[3]) {
-	asigna_Array(array,array1,3);
+	asigna_Array(array, array1, 3);
 }
-
-//////////////////////////////////////
+////////////////	fin ragdoll  	//////////////////////
 
 dJointID getJuntaRuedaDelantera() {
 	return IDs_Juntas[0];
 }
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  int i = 0, n = 0;
+	  int i = 0, 
+	  	nContactos = 0;
 
 	  bool g1 = (o1 == ground || o1 == ID_GeomRampa), 	  // only collide things with the ground
 	  g2 = (o2 == ground || o2 == ID_GeomRampa);
 	  
 	  if (g1 ^ g2) {
-		  const int N = 10;
-		  dContact contact[N];
-		  n = dCollide (o1, o2, N, &contact[0].geom, sizeof(dContact));
+		  dContact contactos[10];
+		  nContactos = dCollide (o1, o2, 10, &contactos[0].geom, sizeof(dContact));
 		  
-		  int sumaContactos = dContactSlip1   + dContactSlip2   +
+		  int sumaContactos = dContactSlip1 + dContactSlip2 +
 				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
 		  
-			    for (i = 0; n>0 && i < n; i++) {
-			      contact[i].surface.mode = sumaContactos;
+			    for (i = 0; nContactos > 0 && i < nContactos; i++) {
+			    	dContact contacto = contactos[i];
+			    
+			      contacto.surface.mode = sumaContactos;
 			      
-			      contact[i].surface.mu = dInfinity;
+			      contacto.surface.mu = dInfinity;
 			      
-			      contact[i].surface.slip1    = 0.1;
-			      contact[i].surface.slip2    = 0.1;
-			      contact[i].surface.soft_erp = 0.5;
-			      contact[i].surface.soft_cfm = 0.3;
+			      contacto.surface.slip1    = 0.1;
+			      contacto.surface.slip2    = 0.1;
+			      contacto.surface.soft_erp = 0.5;
+			      contacto.surface.soft_cfm = 0.3;
 			      
-			      dJointID c = dJointCreateContact (ID_Mundo, contactgroup, &contact[i]);
-			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
-					       dGeomGetBody(contact[i].geom.g2));
+			      dJointID c = dJointCreateContact (ID_Mundo, ID_GrupoJunta, &contactos[i]); //
+			      dJointAttach (c, dGeomGetBody(contacto.geom.g1),
+					       dGeomGetBody(contacto.geom.g2));
 			    }
 
 	  }
@@ -363,7 +355,7 @@ static void simLoop (int pause) { // simulation loop
     	 	dSpaceCollide(ID_Espacio,    0, &nearCallback);
     	 	dWorldStep(ID_Mundo, 0.05);
 
-    	 	dJointGroupEmpty(contactgroup); // remove all contact joints
+    	 	dJointGroupEmpty(ID_GrupoJunta); // remove all contact joints
     	}
 
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
@@ -371,14 +363,15 @@ static void simLoop (int pause) { // simulation loop
   	dsDrawBox (dBodyGetPosition(IDs_Cuerpos[0]), dBodyGetRotation(IDs_Cuerpos[0]), sides);
   		
 	for (i = 1; i < 4; i++) {
-  		 dsDrawCylinder(dBodyGetPosition(IDs_Cuerpos[i]),
-				 dBodyGetRotation(IDs_Cuerpos[i]), 0.02, RADIUS);
+		dBodyID ID_Cuerpo = IDs_Cuerpos[i];
+  		 dsDrawCylinder(dBodyGetPosition(ID_Cuerpo),
+				 dBodyGetRotation(ID_Cuerpo), 0.02, RADIUS);
 	}
 
-  	dVector3 ss;
-  	dGeomBoxGetLengths (ID_GeomRampa, ss);
+  	dVector3 dimensionesLateralesCaja;
+  	dGeomBoxGetLengths(ID_GeomRampa, dimensionesLateralesCaja);
   	
-  	dsDrawBox (dGeomGetPosition(ID_GeomRampa), dGeomGetRotation(ID_GeomRampa), ss);
+  	dsDrawBox (dGeomGetPosition(ID_GeomRampa), dGeomGetRotation(ID_GeomRampa), dimensionesLateralesCaja);
 }
 ////////////////// fin simLoop ////////////////////
 
@@ -517,46 +510,26 @@ Cuerpo cuerpos[3];
 
 /////////////// main ///////////////////////
 int main (int argc, char **argv) {
-	//////////// variables ragdoll ////////////
-	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0};
-	sub3(R_SHOULDER_POS, largoAntebrazo);
-	asigna_Array3(R_ELBOW_POS, R_SHOULDER_POS);
-
-	add3(L_SHOULDER_POS, largoAntebrazo);	
-	asigna_Array3(L_ELBOW_POS, L_SHOULDER_POS);
+	//////////// asignacion variables ragdoll ////////////
+	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0},
+		largoBrazo[3] = {FORE_ARM_LEN, 0.0, 0.0},
+		largoMano[3] = {HAND_LEN, 0.0, 0.0},
+		largoTobillo[3] = {0.0, 0.0, HEEL_LEN},
+		largoPie[3] = {0.0, 0.0, FOOT_LEN};
+			
+	asigna_Array3(R_ELBOW_POS, sub3(R_SHOULDER_POS, largoAntebrazo));	
+	asigna_Array3(L_ELBOW_POS, add3(L_SHOULDER_POS, largoAntebrazo));	
+	asigna_Array3(R_WRIST_POS, sub3(R_ELBOW_POS, largoBrazo));	
+	asigna_Array3(L_WRIST_POS, add3(L_ELBOW_POS, largoBrazo));	
+	asigna_Array3(R_FINGERS_POS, sub3(R_WRIST_POS, largoMano));	
+	asigna_Array3(L_FINGERS_POS, add3(L_WRIST_POS, largoMano));
+	asigna_Array3(R_HEEL_POS, sub3(R_ANKLE_POS, largoTobillo));	
+	asigna_Array3(L_HEEL_POS, sub3(L_ANKLE_POS, largoTobillo));
+	asigna_Array3(R_TOES_POS, add3(R_ANKLE_POS, largoPie));
 	
-	float largoBrazo[3] = {FORE_ARM_LEN, 0.0, 0.0};
-	sub3(R_ELBOW_POS, largoBrazo);
-	asigna_Array3(R_WRIST_POS, R_ELBOW_POS);
-	
-	add3(L_ELBOW_POS, largoBrazo);
-	asigna_Array3(L_WRIST_POS, L_ELBOW_POS);
-	
-	float largoMano[3] = {HAND_LEN, 0.0, 0.0};
-	sub3(R_WRIST_POS, largoMano);
-	asigna_Array3(R_FINGERS_POS, R_WRIST_POS);
-	
-	add3(L_WRIST_POS, largoMano);
-	asigna_Array3(L_FINGERS_POS, L_WRIST_POS);
-
-	float largoTobillo[3] = {0.0, 0.0, HEEL_LEN};
-	sub3(R_ANKLE_POS, largoTobillo);
-	asigna_Array3(R_HEEL_POS, R_ANKLE_POS);
-	
-	sub3(L_ANKLE_POS, largoTobillo);
-	asigna_Array3(L_HEEL_POS, L_ANKLE_POS);
-
-	float largoPie[3] = {0.0, 0.0, FOOT_LEN};
-	add3(R_ANKLE_POS, largoPie);
-	asigna_Array3(R_TOES_POS, R_ANKLE_POS);
-	
-	add3(L_ANKLE_POS, largoPie);
-	asigna_Array3(L_TOES_POS, R_TOES_POS);
-	
-	
-	//////////// fin variables ragdoll ///////////////
-
-  	int i = 0;
+	add3(L_ANKLE_POS, largoPie); //mal
+	asigna_Array3(L_TOES_POS, R_TOES_POS);	
+	//////////// fin asignacion variables ragdoll ///////////////
   	
   	dMass m;
 
@@ -573,9 +546,9 @@ int main (int argc, char **argv) {
   	
   	ID_Mundo = dWorldCreate();
   	ID_Espacio = dHashSpaceCreate(0);
-  	contactgroup = dJointGroupCreate(0);
+  	ID_GrupoJunta = dJointGroupCreate(0);
   	
-  	dWorldSetGravity(ID_Mundo, 0, 0, -0.5);
+  	dWorldSetGravity(ID_Mundo, 0, 0, -0.5); //
   	
   	ground = dCreatePlane(ID_Espacio, 0, 0, 1, 0);
 
@@ -589,11 +562,11 @@ int main (int argc, char **argv) {
   	  	
   	cuerpos[0].setMasa(IDs_Cuerpos[0], &m);
   	
-  	ID_GeomCaja[0] = dCreateBox(0,  LENGTH,  WIDTH, HEIGHT);
+  	ID_GeomsCajas[0] = dCreateBox(0,  LENGTH,  WIDTH, HEIGHT);
   	
-  	dGeomSetBody(ID_GeomCaja[0], IDs_Cuerpos[0]);
+  	dGeomSetBody(ID_GeomsCajas[0], IDs_Cuerpos[0]);
 
-  	for (i = 1; i < 4; i++) {   
+  	for (int i = 1; i < 4; i++) {   
   		dGeomID ID_GeomEsfera1 = dCreateSphere (0, RADIUS);
 		 		
   		cuerpos[i] = Cuerpo(ID_Mundo);
@@ -629,7 +602,7 @@ int main (int argc, char **argv) {
 		
 	Junta junta = Junta();	
 		
-  	for (i = 0; i < 3; i++) {   
+  	for (int i = 0; i < 3; i++) {   
   		dJointID ID_Junta = dJointCreateHinge2 (ID_Mundo, 0);
   		
     		IDs_Juntas[i] = ID_Junta;
@@ -650,7 +623,7 @@ int main (int argc, char **argv) {
 	  	
 	ID_EspacioCoche = espacio.getID();  	
 	
-	espacio.annade(ID_EspacioCoche, ID_GeomCaja[0]);
+	espacio.annade(ID_EspacioCoche, ID_GeomsCajas[0]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[0]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[1]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[2]);
@@ -662,8 +635,6 @@ int main (int argc, char **argv) {
   	ID_GeomRampa = caja.getID();
 
   	dsSimulationLoop (argc, argv, 800, 600, &llamadas_Simulacion);
-  	
-  	//printf("%s\n",saludo); //saludo en ragdoll.h
-  	
+  	  	
   	return 0;
 }
