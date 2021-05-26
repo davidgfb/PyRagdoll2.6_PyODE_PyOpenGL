@@ -18,12 +18,12 @@ float   LENGTH = 0.7,
 static const dVector3   yunit = {0, 1, 0}, 
 			zunit = {0, 0, 1};
 
-static dWorldID world; // dynamics and collision objects (chassis, 3 wheels, environment)
-static dSpaceID space, car_space;
-static dBodyID body[4];
-static dJointID joint[3]; // array3d de dJointIDs
+static dWorldID ID_Mundo; // dynamics and collision objects (chassis, 3 wheels, environment)
+static dSpaceID ID_Espacio, ID_EspacioCoche;
+static dBodyID IDs_Cuerpos[4];
+static dJointID IDs_Juntas[3]; 
 static dJointGroupID contactgroup;
-static dGeomID ground, box[1], sphere[3], ground_box;
+static dGeomID ground, ID_GeomCaja[1], ID_GeomEsfera[3], ID_GeomRampa;
 static dReal    speed = 0, 
 		steer = 0; // things that the user controls // user commands
 ///////////////////////////////////////////
@@ -336,14 +336,14 @@ void asigna_Array3(float array[3], float array1[3]) {
 //////////////////////////////////////
 
 dJointID getJuntaRuedaDelantera() {
-	return joint[0];
+	return IDs_Juntas[0];
 }
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 	  int i = 0, n = 0;
 
-	  bool g1 = (o1 == ground || o1 == ground_box), 	  // only collide things with the ground
-	  g2 = (o2 == ground || o2 == ground_box);
+	  bool g1 = (o1 == ground || o1 == ID_GeomRampa), 	  // only collide things with the ground
+	  g2 = (o2 == ground || o2 == ID_GeomRampa);
 	  
 	  if (g1 ^ g2) {
 		  const int N = 10;
@@ -363,7 +363,7 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 			      contact[i].surface.soft_erp = 0.5;
 			      contact[i].surface.soft_cfm = 0.3;
 			      
-			      dJointID c = dJointCreateContact (world, contactgroup, &contact[i]);
+			      dJointID c = dJointCreateContact (ID_Mundo, contactgroup, &contact[i]);
 			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
 					       dGeomGetBody(contact[i].geom.g2));
 			    }
@@ -391,41 +391,40 @@ int ciclosEspera = 20, cicloActual = 0;
 static void simLoop (int pause) { // simulation loop
    	int i = 0;
 	float vMax = 0.1;
+		
+	dJointID juntaRuedaDelanteraCoche = getJuntaRuedaDelantera();	
 		  
     	if (!pause) {
-         	dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
-         	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);
+         	dJointSetHinge2Param (juntaRuedaDelanteraCoche,  dParamVel2, -speed); // motor rueda/s delantera
+         	dJointSetHinge2Param (juntaRuedaDelanteraCoche, dParamFMax2,    0.1);
 
     	 	dReal v = steer - dJointGetHinge2Angle1 (getJuntaRuedaDelantera()); // steering
-    
-
-    	 	
+     	 	
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFudgeFactor,   0.1);
+    	 	dJointSetHinge2Param (juntaRuedaDelanteraCoche, dParamFudgeFactor,   0.1);
 
-    	 	dSpaceCollide (space,    0, &nearCallback);
-    	 	dWorldStep    (world, 0.05);
+    	 	dSpaceCollide(ID_Espacio,    0, &nearCallback);
+    	 	dWorldStep(ID_Mundo, 0.05);
 
-    	 	dJointGroupEmpty (contactgroup); // remove all contact joints
+    	 	dJointGroupEmpty(contactgroup); // remove all contact joints
     	}
 
-  	dsSetColor (0, 1, 1);
-  	dsSetTexture (DS_WOOD);
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
-  	dsDrawBox (dBodyGetPosition(body[0]), dBodyGetRotation(body[0]), sides);
-  	dsSetColor (1, 1, 1);
-	
+  	
+  	dsDrawBox (dBodyGetPosition(IDs_Cuerpos[0]), dBodyGetRotation(IDs_Cuerpos[0]), sides);
+  		
 	for (i = 1; i < 4; i++) {
-  		 dsDrawCylinder (dBodyGetPosition(body[i]),
-				 dBodyGetRotation(body[i]), 0.02, RADIUS);
+  		 dsDrawCylinder(dBodyGetPosition(IDs_Cuerpos[i]),
+				 dBodyGetRotation(IDs_Cuerpos[i]), 0.02, RADIUS);
 	}
 
   	dVector3 ss;
-  	dGeomBoxGetLengths (ground_box, ss);
-  	dsDrawBox (dGeomGetPosition(ground_box), dGeomGetRotation(ground_box), ss);
+  	dGeomBoxGetLengths (ID_GeomRampa, ss);
+  	
+  	dsDrawBox (dGeomGetPosition(ID_GeomRampa), dGeomGetRotation(ID_GeomRampa), ss);
 }
 ////////////////// fin simLoop ////////////////////
 
@@ -437,8 +436,8 @@ class Ragdoll {
 	//constructor
 	//public: 	
 	
-	dWorldID world; 
-	dSpaceID space;
+	dWorldID ID_Mundo; 
+	dSpaceID ID_Espacio;
 	float densidad = 0.0,
 
 	      totalMass = 0.0,
@@ -446,17 +445,17 @@ class Ragdoll {
 	
 	
 	Ragdoll(dWorldID w, dSpaceID s, float d, float o[3]) { //no densidad		
-		world = w;
-		space = s;
+		ID_Mundo = w;
+		ID_Espacio = s;
 		densidad = d;
 		asigna_Array3(offset, o); //offset = {o[0],o[1],o[2]};
 		
 	}
 	
 	//sobrecarga para tener parametro offset definido por defecto
-	Ragdoll(dWorldID world, dSpaceID space, float density) {
+	Ragdoll(dWorldID ID_Mundo, dSpaceID pID_Espacio, float density) {
 		float offset[3] = {0.0, 0.0, 0.0};
-		Ragdoll(world,space,density,offset);
+		Ragdoll(ID_Mundo,pID_Espacio,density,offset);
 	}
 	
 	void addBody(float p1[3], float p2[3], float radius) {
@@ -467,9 +466,9 @@ class Ragdoll {
 		//cylinder length not including endcaps, make capsules overlap by half radius at joints
 		float cyllen = dist3(p1, p2) - radius; //largo cilindro
 	
-		dBodyID body = dBodyCreate(world);
+		dBodyID body = dBodyCreate(ID_Mundo);
 	
-		dMass m; //?
+		dMass m; 
 		
 		dMassSetCylinder(&m,densidad,3,radius,cyllen); //dCreateCapsule? //3=eje z //m.
 	}
@@ -480,8 +479,8 @@ class Caja {
 	dGeomID ID;
 
 	public:
-		Caja(dSpaceID espacio, dReal dx, dReal dy, dReal dz, dMatrix3 R) {
-			ID = dCreateBox(space, dx, dy, dz);   
+		Caja(dSpaceID pID_Espacio, dReal dx, dReal dy, dReal dz, dMatrix3 R) {
+			ID = dCreateBox(pID_Espacio, dx, dy, dz);   
 			dGeomSetPosition(ID, 2, 0, -0.34);
   			dGeomSetRotation(ID, R);
 		}
@@ -495,8 +494,8 @@ class Espacio {
 	dSpaceID ID;
 
 	public:
-		Espacio(dSpaceID espacio) {
-			ID = dSimpleSpaceCreate (space);   	// create car space and add it to the top level space
+		Espacio(dSpaceID pID_Espacio) {
+			ID = dSimpleSpaceCreate (pID_Espacio);   	// create car space and add it to the top level space
 		}
 		
 		dSpaceID getID() {
@@ -612,99 +611,101 @@ int main (int argc, char **argv) {
   	
   	dMass m;
 
-  	dsFunctions fn;   	// setup pointers to drawstuff callback functions
+  	dsFunctions llamadas_Simulacion;
   	
-  	fn.version = DS_VERSION;
-  	fn.start   = &start;
-  	fn.step    = &simLoop;
-  	fn.command = &command;
-  	fn.stop    = 0;
-  	fn.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
+  	llamadas_Simulacion.version = DS_VERSION;
+  	llamadas_Simulacion.start   = &start;
+  	llamadas_Simulacion.step    = &simLoop;
+  	llamadas_Simulacion.command = &command;
+  	llamadas_Simulacion.stop    = 0;
+  	llamadas_Simulacion.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
 
   	dInitODE2(0);   	
   	
-  	world        = dWorldCreate();
-  	space        = dHashSpaceCreate (0);
-  	contactgroup = dJointGroupCreate (0);
+  	ID_Mundo = dWorldCreate();
+  	ID_Espacio = dHashSpaceCreate(0);
+  	contactgroup = dJointGroupCreate(0);
   	
-  	dWorldSetGravity (world, 0, 0, -0.5);
+  	dWorldSetGravity(ID_Mundo, 0, 0, -0.5);
   	
-  	ground = dCreatePlane (space, 0, 0, 1, 0);
+  	ground = dCreatePlane(ID_Espacio, 0, 0, 1, 0);
 
-	cuerpos[0] = Cuerpo(world);
-	body[0] = cuerpos[0].getID(); 
+	cuerpos[0] = Cuerpo(ID_Mundo);
+	IDs_Cuerpos[0] = cuerpos[0].getID(); 
   	
-  	cuerpos[0].setPosicion(body[0],    0,      0, STARTZ);
+  	cuerpos[0].setPosicion(IDs_Cuerpos[0], 0, 0, STARTZ);
   		
-  	dMassSetBox (&m,              1, LENGTH,  WIDTH, HEIGHT);
-  	dMassAdjust (&m,          CMASS);
+  	dMassSetBox(&m, 1, LENGTH,  WIDTH, HEIGHT);
+  	dMassAdjust(&m, CMASS);
   	  	
-  	cuerpos[0].setMasa(body[0],      &m);
+  	cuerpos[0].setMasa(IDs_Cuerpos[0], &m);
   	
-  	box[0] = dCreateBox (0,  LENGTH,  WIDTH, HEIGHT);
+  	ID_GeomCaja[0] = dCreateBox(0,  LENGTH,  WIDTH, HEIGHT);
   	
-  	dGeomSetBody   (box[0], body[0]);
+  	dGeomSetBody(ID_GeomCaja[0], IDs_Cuerpos[0]);
 
   	for (i = 1; i < 4; i++) {   	 		
-  		cuerpos[i] = Cuerpo(world);
-  		body[i] = cuerpos[i].getID(); 
+  		cuerpos[i] = Cuerpo(ID_Mundo);
+  		IDs_Cuerpos[i] = cuerpos[i].getID(); 
 		
 		dQuaternion q;
 		dQFromAxisAndAngle (      q, 1,      0, 0, M_PI / 2);
 			
-		cuerpos[i].setQuaternion(body[i], q);
+		cuerpos[i].setQuaternion(IDs_Cuerpos[i], q);
 		dMassSetSphere (&m,          1, RADIUS);
 		dMassAdjust    (&m,      WMASS);
-		dBodySetMass   (body[i],    &m);
+		dBodySetMass   (IDs_Cuerpos[i],    &m);
 		
-		sphere[i - 1] = dCreateSphere (0, RADIUS);
+		ID_GeomEsfera[i - 1] = dCreateSphere (0, RADIUS);
 		
-		dGeomSetBody (sphere[i - 1], body[i]);
+		dGeomSetBody (ID_GeomEsfera[i - 1], IDs_Cuerpos[i]);
 	 }
   	
   	float lengthEntreDos = LENGTH / 2, 
-  	widthEntreDos = WIDTH / 2, 
-  	startZ_MenosHeightEntreDos = STARTZ - HEIGHT / 2;
+	  	widthEntreDos = WIDTH / 2, 
+	  	startZ_MenosHeightEntreDos = STARTZ - HEIGHT / 2;
   	
-  	Cuerpo cuerpo1 = Cuerpo();
+  	Cuerpo cuerpo = Cuerpo();
   		
-  	cuerpo1.setPosicion(body[1],  lengthEntreDos,              0, startZ_MenosHeightEntreDos);
-  	cuerpo1.setPosicion(body[2], -lengthEntreDos,  widthEntreDos, startZ_MenosHeightEntreDos);
-  	cuerpo1.setPosicion(body[3], -lengthEntreDos, -widthEntreDos, startZ_MenosHeightEntreDos);
+  	cuerpo.setPosicion(IDs_Cuerpos[1],  lengthEntreDos,              0, startZ_MenosHeightEntreDos);
+  	cuerpo.setPosicion(IDs_Cuerpos[2], -lengthEntreDos,  widthEntreDos, startZ_MenosHeightEntreDos);
+  	cuerpo.setPosicion(IDs_Cuerpos[3], -lengthEntreDos, -widthEntreDos, startZ_MenosHeightEntreDos);
 		
 	Junta junta = Junta();	
 		
-  	for (i = 0; i < 3; i++) {   	
-    		joint[i] = dJointCreateHinge2 (world, 0);
+  	for (i = 0; i < 3; i++) {   
+  		dJointID ID_Junta = dJointCreateHinge2 (ID_Mundo, 0);
+  		
+    		IDs_Juntas[i] = ID_Junta;
     		
-    		dJointAttach (joint[i], body[0], body[i + 1]);
+    		dJointAttach (ID_Junta, IDs_Cuerpos[0], IDs_Cuerpos[i + 1]);
     		
-    		const dReal *a = dBodyGetPosition(body[i + 1]);
+    		const dReal *a = dBodyGetPosition(IDs_Cuerpos[i + 1]);
     		    		
-    		junta.setAnclaBisagra2(joint[i], a[0], a[1], a[2]); 		
-    		junta.setEjesBisagra2(joint[i], zunit, yunit);
-		junta.setParamsBisagra2(joint[i], dParamSuspensionERP, 0.4);		
-    		junta.setParamsBisagra2(joint[i], dParamSuspensionCFM, 0.8);
-    		junta.setParamsBisagra2(joint[i],dParamLoStop,0); 
-    		junta.setParamsBisagra2(joint[i],dParamHiStop,0); 
+    		junta.setAnclaBisagra2(ID_Junta, a[0], a[1], a[2]); 		
+    		junta.setEjesBisagra2(ID_Junta, zunit, yunit);
+		junta.setParamsBisagra2(ID_Junta, dParamSuspensionERP, 0.4);		
+    		junta.setParamsBisagra2(ID_Junta, dParamSuspensionCFM, 0.8);
+    		junta.setParamsBisagra2(ID_Junta,dParamLoStop,0); 
+    		junta.setParamsBisagra2(ID_Junta,dParamHiStop,0); 
 	}
 
-	Espacio espacio = Espacio(space);
+	Espacio espacio = Espacio(ID_Espacio);
 	  	
-	car_space = espacio.getID();  	
+	ID_EspacioCoche = espacio.getID();  	
 	
-	espacio.annade(car_space,    box[0]);
-	espacio.annade(car_space,    sphere[0]);
-	espacio.annade(car_space,    sphere[1]);
-	espacio.annade(car_space,    sphere[2]);
+	espacio.annade(ID_EspacioCoche, ID_GeomCaja[0]);
+	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[0]);
+	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[1]);
+	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[2]);
 	
   	dMatrix3 R;
-  	dRFromAxisAndAngle (       R, 0, 1,     0, -0.15);
+  	dRFromAxisAndAngle (R, 0, 1, 0, -0.15);
   	
-  	Caja caja = Caja(space, 2, 2, 1, R); 	//rampa  	
-  	ground_box = caja.getID();
+  	Caja caja = Caja(ID_Espacio, 2, 2, 1, R); 	//rampa  	
+  	ID_GeomRampa = caja.getID();
 
-  	dsSimulationLoop (argc, argv, 800, 600, &fn);
+  	dsSimulationLoop (argc, argv, 800, 600, &llamadas_Simulacion);
   	
   	return 0;
 }
