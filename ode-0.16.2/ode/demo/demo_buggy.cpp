@@ -23,7 +23,7 @@ static dSpaceID ID_Espacio, ID_EspacioCoche;
 static dBodyID IDs_Cuerpos[4];
 static dJointID IDs_Juntas[3]; 
 static dJointGroupID contactgroup;
-static dGeomID ground, ID_GeomCaja[1], ID_GeomEsfera[3], ID_GeomRampa;
+static dGeomID ground, ID_GeomCaja[1], IDs_GeomsEsferas[3], ID_GeomRampa;
 static dReal    speed = 0, 
 		steer = 0; // things that the user controls // user commands
 ///////////////////////////////////////////
@@ -644,21 +644,28 @@ int main (int argc, char **argv) {
   	
   	dGeomSetBody(ID_GeomCaja[0], IDs_Cuerpos[0]);
 
-  	for (i = 1; i < 4; i++) {   	 		
+  	for (i = 1; i < 4; i++) {   
+  		dGeomID ID_GeomEsfera1 = dCreateSphere (0, RADIUS);
+		 		
   		cuerpos[i] = Cuerpo(ID_Mundo);
   		IDs_Cuerpos[i] = cuerpos[i].getID(); 
 		
+		Cuerpo cuerpo = cuerpos[i];
+		dBodyID ID_Cuerpo = IDs_Cuerpos[i];
+		
 		dQuaternion q;
-		dQFromAxisAndAngle (      q, 1,      0, 0, M_PI / 2);
+		dQFromAxisAndAngle(q, 1, 0, 0, M_PI / 2);
 			
-		cuerpos[i].setQuaternion(IDs_Cuerpos[i], q);
-		dMassSetSphere (&m,          1, RADIUS);
-		dMassAdjust    (&m,      WMASS);
-		dBodySetMass   (IDs_Cuerpos[i],    &m);
+		cuerpo.setQuaternion(IDs_Cuerpos[i], q);
+		dMassSetSphere(&m, 1, RADIUS);
+		dMassAdjust(&m, WMASS);
+		dBodySetMass(ID_Cuerpo, &m);
 		
-		ID_GeomEsfera[i - 1] = dCreateSphere (0, RADIUS);
+		cuerpos[i] = cuerpo;
 		
-		dGeomSetBody (ID_GeomEsfera[i - 1], IDs_Cuerpos[i]);
+		IDs_GeomsEsferas[i - 1] = ID_GeomEsfera1;
+		
+		dGeomSetBody(ID_GeomEsfera1, ID_Cuerpo);
 	 }
   	
   	float lengthEntreDos = LENGTH / 2, 
@@ -695,9 +702,9 @@ int main (int argc, char **argv) {
 	ID_EspacioCoche = espacio.getID();  	
 	
 	espacio.annade(ID_EspacioCoche, ID_GeomCaja[0]);
-	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[0]);
-	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[1]);
-	espacio.annade(ID_EspacioCoche, ID_GeomEsfera[2]);
+	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[0]);
+	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[1]);
+	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[2]);
 	
   	dMatrix3 R;
   	dRFromAxisAndAngle (R, 0, 1, 0, -0.15);
