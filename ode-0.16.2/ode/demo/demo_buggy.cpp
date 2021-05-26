@@ -89,12 +89,23 @@ L_TOES_POS[3];
 
 ////////////////////////////////////////////////
 
+bool esPositivo(float x) {
+	bool positivo = false;
+
+	if (x > 0.0) {
+		positivo = true;
+	}
+
+	return positivo;
+}
+
+
 ///////////// ragdoll //////////////////
 float sign(float x) { //sentido bool
 	//Returns 1.0 if x is positive, -1.0 if x is negative or zero.
 	float valor = -1.0; // (x <= 0.0), x E (-inf, 0]
 	
-	if (x > 0.0) { // (0, inf)
+	if (esPositivo(x)) { // (0, inf)
 		valor = 1.0;
 	} 
 	
@@ -108,11 +119,13 @@ float len3(float v[3]) {
 	return sqrt(x * x + y * y + z * z);
 }
 
+/*
 void imprimeArray(float* array, int t) { //float star = tipo array	
 	for (int posicion = 0; posicion < t; posicion++) { 
 		printf("%f ", array[posicion]); //array);
 	}	
 }
+*/
 
 void asigna_Array(float *array, float *array1, int t) {
 	//array=array1
@@ -121,31 +134,19 @@ void asigna_Array(float *array, float *array1, int t) {
 	}
 }
 
-float matrizNegada[3], //lo pasamos a una matriz3, otra matriz9 y otra matriz16
-	matrizSuma[3],
-	matrizMultiplicada[3],
-	matrizDividida[3],
-	matrizNormalizada[3],
-	matrizVectorizada[3],
-	
-	matrizInvertida[9],
-	ejeZ[9],
-	matrizRotada9[9],
-	
-	q[16],
-	matrizRotada3[3];
+float matriz3[3], 
+	matriz9[9],
+	matriz16[16];
 		
 float* neg3(float v[3]) { //no devuelve nada haz una copia antes
 	//the negation of 3-vector v.
-	float matrizNegada1[3] = {-v[0],-v[1],-v[2]};
+	float matrizNegada1[3] = {-v[0], -v[1], -v[2]};
 	
-	asigna_Array(matrizNegada,
+	asigna_Array(matriz3,
 			matrizNegada1,3);
 			
-	return matrizNegada;
+	return matriz3;
 }
-
-
 
 float* add3(float a[3], float b[3]) { //modifica a haz una copia
 	//the sum of 3-vectors a and b.
@@ -153,20 +154,16 @@ float* add3(float a[3], float b[3]) { //modifica a haz una copia
 				a[1] + b[1],
 				a[2] + b[2]};
 				
-	asigna_Array(matrizSuma,
+	asigna_Array(matriz3,
 			matrizSuma1,3);
 				
-	return matrizSuma;
+	return matriz3;
 }
 
 float* sub3(float a[3], float b[3]) { //modifica a haz una copia
 	//the difference between 3-vectors a and b.
-	return add3(a,neg3(b));
+	return add3(a, neg3(b));
 }
-
-
-
-
 
 float* mul3(float v[3], float s) { 
 	//3-vector v multiplied by scalar s.
@@ -174,47 +171,40 @@ float* mul3(float v[3], float s) {
 					v[1] * s,
 					v[2] * s};
 					
-	asigna_Array(matrizMultiplicada,
-			matrizMultiplicada1,3);
+	asigna_Array(matriz3,
+			matrizMultiplicada1, 3);
 	
-	return matrizMultiplicada;
+	return matriz3;
 }
-
-
-
-
 
 float* div3(float v[3], float s) {
 	//3-vector v divided by scalar s.	
-	return mul3(v,1.0/s);
+	return mul3(v, 1.0 / s);
 }
 
 float dist3(float a[3], float b[3]) {
 	//Returns the distance between point 3-vectors a and b.		
-	//TODO
-	return 0; //len3(sub3(a, b));
+	return len3(sub3(a, b));
 }
 
 float* norm3(float v[3]) {
 	//the unit length 3-vector parallel to 3-vector v.	
 	float l = len3(v);
 
-	if (l > 0.0) { //funcion bool
-		//TODO
-		/*float matrizDividida[3] = div3(v, l);
+	if (esPositivo(l)) { 
+		float *matrizDividida = div3(v, l);
 		
-		asigna_Array(matrizNormalizada,
+		asigna_Array(matriz3,
 			matrizDividida,3);
-		*/
 		
 	} else {
 		float matrizCeros[3] = {0.0, 0.0, 0.0};
 		
-		asigna_Array(matrizNormalizada,
+		asigna_Array(matriz3,
 			matrizCeros,3);
 	}
 	
-	return matrizNormalizada;
+	return matriz3;
 }
 
 float dot3(float a[3], float b[3]) {
@@ -225,38 +215,23 @@ float dot3(float a[3], float b[3]) {
 	return xa * xb + ya * yb + za * zb;
 }
 
-
-
-
-
 float* cross(float a[3], float b[3]) { 
 	//the cross product of 3-vectors a and b.
 	float matrizVectorizada1[3] = {a[1] * b[2] - b[1] * a[2],
 				       a[2] * b[0] - b[2] * a[0],
 				       a[0] * b[1] - b[0] * a[1]};
 	
-	asigna_Array(matrizVectorizada,
+	asigna_Array(matriz3,
 		     matrizVectorizada1,3);
 	
-	return matrizVectorizada;
+	return matriz3;
 }
 
 //float matrizProyectada[3];
 
 float* project3(float v[3], float d[3]) {
 	//projection of 3-vector v onto unit 3-vector d.
-	//float matrizProyectada1[3];
-		
-	/*
-	float v1[3] = {v[0], v[1], v[2]}; //copia de v 
-	
-	norm3(v1); //modifica v1
-		
-	mul3(v, dot3(v1, d));
-	*/
-	
-	//TODO
-	return 0; //mul3(v, dot3(v, d));
+	return mul3(v, dot3(norm3(v), d));
 }
 
 float acosdot3(float a[3], float b[3]) {
@@ -267,7 +242,7 @@ float acosdot3(float a[3], float b[3]) {
 		valor = M_PI;
 	} else {
 		if (x == 0.0) {
-			valor = acos(x); //acos(0)
+			valor = acos(0.0); 
 		}
 	}
 	
@@ -280,10 +255,10 @@ float* invert3x3(float m[9]) {
 				      m[1],m[4],m[7],
 				      m[2],m[5],m[8]};
 	
-	asigna_Array(matrizInvertida,
+	asigna_Array(matriz9,
 		     matrizInvertida1,9);
 	
-	return matrizInvertida;
+	return matriz9;
 }
 
 float* rotate3(float m[9], float v[3]) { 
@@ -292,22 +267,22 @@ float* rotate3(float m[9], float v[3]) {
 	     v[0] * m[3] + v[1] * m[4] + v[2] * m[5],
  	     v[0] * m[6] + v[1] * m[7] + v[2] * m[8]};
  	     
- 	asigna_Array(matrizRotada3,matrizRotada31,3);     
+ 	asigna_Array(matriz3,matrizRotada31,3);     
  	     
- 	return matrizRotada3;     
+ 	return matriz3;     
 }
 
 float* zaxis(float m[9]) {
 	//the z-axis vector from 3x3 (row major) rotation matrix m.
 	float ejeZ1[9]; 
 	
-	asigna_Array(ejeZ,ejeZ1,9); //inicializa ejeZ importante!
+	asigna_Array(matriz9,ejeZ1,9); //inicializa ejeZ importante!
 		
-	ejeZ[0] = m[2];
-	ejeZ[1] = m[5];
-	ejeZ[2] = m[8];
+	matriz9[0] = m[2];
+	matriz9[1] = m[5];
+	matriz9[2] = m[8];
 	
-	return ejeZ;	
+	return matriz9;	
 }
 
 float* calcRotMatrix(float axis[9], float angle) {
@@ -335,9 +310,9 @@ float* calcRotMatrix(float axis[9], float angle) {
 	      			  tPorEje1PorEje2 + senoThetaPorEje0,
 	      			  t * axis[2] * axis[2] + cosTheta};
 	      
-	asigna_Array(matrizRotada9,matrizRotada91,9);
+	asigna_Array(matriz9,matrizRotada91,9);
 	
-	return matrizRotada9;
+	return matriz9;
 }
 
 float* makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> r[16]
@@ -348,9 +323,9 @@ float* makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> 
 			r[5],r[8],0.0,
 			p[0],p[1],p[2],1.0};
 			
-	asigna_Array(q,s,16); 
+	asigna_Array(matriz16,s,16); 
 		
-	return q;
+	return matriz16;
 }
 
 //obsoleto?
@@ -404,11 +379,6 @@ static void start() { // start simulation - set viewpoint
 	  
 	  //camara
 	  dsSetViewpoint (pos, rot);
-	  printf ("Press:\t'a' to increase speed.\n"
-		  	"\t'z' to decrease speed.\n"
-			"\t',' to steer left.\n"
-			"\t'.' to steer right.\n"
-			"\t' ' to reset speed and steering.\n");
 }
 
 static void command (int cmd) {  // lower 
