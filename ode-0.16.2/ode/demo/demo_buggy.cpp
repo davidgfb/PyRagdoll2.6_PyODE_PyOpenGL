@@ -5,27 +5,27 @@ this also shows you how to use geom groups.
 
 #include <ode/ode.h>
 #include <drawstuff/drawstuff.h>
-#include "texturepath.h"
-#include "Ragdoll.h"
 #include "Ragdoll.cpp"
 #include "Caja.cpp"
 #include "Espacio.cpp"
 #include "Cuerpo.cpp"
 #include "Junta.cpp"
+#include "Coche.cpp"
 #include "Demo_Buggy.h"
 
 dVector3 yunit = {0, 1, 0}, 
 			zunit = {0, 0, 1};
 
 dWorldID ID_Mundo; // dynamics and collision objects (chassis, 3 wheels, environment)
-dSpaceID ID_Espacio, ID_EspacioCoche;
+dSpaceID ID_Espacio, 
+	ID_EspacioCoche;
 dBodyID IDs_Cuerpos[4];
 dJointID IDs_Juntas[3]; 
 dJointGroupID ID_GrupoJunta;
-dGeomID ground, ID_GeomsCajas[1], IDs_GeomsEsferas[3], ID_GeomRampa;
-dReal speed = 0, 
-		steer = 0; // things that the user controls // user commands
-
+dGeomID ID_GeomSuelo, 
+	IDs_GeomsCajas[1], 
+	IDs_GeomsEsferas[3], 
+	ID_GeomRampa;
 Cuerpo cuerpos[3];
 
 dJointID getJuntaRuedaDelantera() {
@@ -34,8 +34,8 @@ dJointID getJuntaRuedaDelantera() {
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 	  int nContactos = 0;
-	  bool g1 = (o1 == ground || o1 == ID_GeomRampa), 	  // only collide things with the ground
-	  		g2 = (o2 == ground || o2 == ID_GeomRampa);
+	  bool g1 = (o1 == ID_GeomSuelo || o1 == ID_GeomRampa), 	  // only collide things with the ground
+	  		g2 = (o2 == ID_GeomSuelo || o2 == ID_GeomRampa);
 	  
 	  if (g1 ^ g2) {
 		  dContact contactos[10];
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   	llamadas_Simulacion.step    = &simLoop;
   	llamadas_Simulacion.command = 0;
   	llamadas_Simulacion.stop    = 0;
-  	llamadas_Simulacion.path_to_textures = DRAWSTUFF_TEXTURE_PATH;
+  	llamadas_Simulacion.path_to_textures = 0; 
 
   	dInitODE2(0);   	
   	
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
   	
   	dWorldSetGravity(ID_Mundo, 0, 0, -0.5); //
   	
-  	ground = dCreatePlane(ID_Espacio, 0, 0, 1, 0);
+  	ID_GeomSuelo = dCreatePlane(ID_Espacio, 0, 0, 1, 0);
 
 	cuerpos[0] = Cuerpo(ID_Mundo);
 	IDs_Cuerpos[0] = cuerpos[0].getID(); 
@@ -137,9 +137,9 @@ int main(int argc, char **argv) {
   	  	
   	cuerpos[0].setMasa(IDs_Cuerpos[0], &m);
   	
-  	ID_GeomsCajas[0] = dCreateBox(0,  LENGTH,  WIDTH, HEIGHT);
+  	IDs_GeomsCajas[0] = dCreateBox(0,  LENGTH,  WIDTH, HEIGHT);
   	
-  	dGeomSetBody(ID_GeomsCajas[0], IDs_Cuerpos[0]);
+  	dGeomSetBody(IDs_GeomsCajas[0], IDs_Cuerpos[0]);
 
   	for (int i = 1; i < 4; i++) {   
   		dGeomID ID_GeomEsfera1 = dCreateSphere (0, RADIUS);
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 	  	
 	ID_EspacioCoche = espacio.getID();  	
 	
-	espacio.annade(ID_EspacioCoche, ID_GeomsCajas[0]);
+	espacio.annade(ID_EspacioCoche, IDs_GeomsCajas[0]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[0]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[1]);
 	espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[2]);
