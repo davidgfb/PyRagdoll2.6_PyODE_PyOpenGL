@@ -108,32 +108,10 @@ float len3(float v[3]) {
 	return sqrt(x * x + y * y + z * z);
 }
 
-//error sizeof(puntero) // tamaño
 void imprimeArray(float* array, int t) { //float star = tipo array	
 	for (int posicion = 0; posicion < t; posicion++) { 
 		printf("%f ", array[posicion]); //array);
 	}	
-}
-
-void neg3(float v[3]) { //no devuelve nada haz una copia antes
-	//the negation of 3-vector v.
-	for (int posicion = 0; posicion < 3; posicion++) {
-		v[posicion] *= -1.0; 
-	}
-}
-
-void add3(float a[3], float b[3]) { //modifica a haz una copia
-	//the sum of 3-vectors a and b.
-	a[0] += b[0];
-	a[1] += b[1];
-	a[2] += b[2];
-}
-
-void sub3(float a[3], float b[3]) { //modifica a haz una copia
-	//the difference between 3-vectors a and b.
-	a[0] -= b[0];
-	a[1] -= b[1];
-	a[2] -= b[2];
 }
 
 void asigna_Array(float *array, float *array1, int t) {
@@ -143,7 +121,52 @@ void asigna_Array(float *array, float *array1, int t) {
 	}
 }
 
-float matrizMultiplicada[3];
+float matrizNegada[3], //lo pasamos a una matriz3, otra matriz9 y otra matriz16
+	matrizSuma[3],
+	matrizMultiplicada[3],
+	matrizDividida[3],
+	matrizNormalizada[3],
+	matrizVectorizada[3],
+	
+	matrizInvertida[9],
+	ejeZ[9],
+	matrizRotada9[9],
+	
+	q[16],
+	matrizRotada3[3];
+		
+float* neg3(float v[3]) { //no devuelve nada haz una copia antes
+	//the negation of 3-vector v.
+	float matrizNegada1[3] = {-v[0],-v[1],-v[2]};
+	
+	asigna_Array(matrizNegada,
+			matrizNegada1,3);
+			
+	return matrizNegada;
+}
+
+
+
+float* add3(float a[3], float b[3]) { //modifica a haz una copia
+	//the sum of 3-vectors a and b.
+	float matrizSuma1[3] = {a[0] + b[0],
+				a[1] + b[1],
+				a[2] + b[2]};
+				
+	asigna_Array(matrizSuma,
+			matrizSuma1,3);
+				
+	return matrizSuma;
+}
+
+float* sub3(float a[3], float b[3]) { //modifica a haz una copia
+	//the difference between 3-vectors a and b.
+	return add3(a,neg3(b));
+}
+
+
+
+
 
 float* mul3(float v[3], float s) { 
 	//3-vector v multiplied by scalar s.
@@ -159,22 +182,11 @@ float* mul3(float v[3], float s) {
 
 
 
-float matrizDividida[3],
-	matrizNormalizada[3];
+
 
 float* div3(float v[3], float s) {
-	//3-vector v divided by scalar s.
-	
+	//3-vector v divided by scalar s.	
 	return mul3(v,1.0/s);
-	
-	/*
-	float matrizDividida1[3] = {v[0]/s, v[1]/s, v[2]/s};
-	
-	asigna_Array(matrizDividida,
-			matrizDividida1,3);
-
-	return matrizDividida;
-	*/
 }
 
 float dist3(float a[3], float b[3]) {
@@ -215,12 +227,7 @@ float dot3(float a[3], float b[3]) {
 
 
 
-float matrizVectorizada[3],
-	matrizInvertida[9],
-	ejeZ[9],
-	matrizRotada9[9],
-	q[16],
-	matrizRotada3[3];
+
 
 float* cross(float a[3], float b[3]) { 
 	//the cross product of 3-vectors a and b.
