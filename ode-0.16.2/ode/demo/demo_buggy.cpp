@@ -136,39 +136,73 @@ void sub3(float a[3], float b[3]) { //modifica a haz una copia
 	a[2] -= b[2];
 }
 
-void mul3(float v[3], float s) { //haz una copia
+void asigna_Array(float *array, float *array1, int t) {
+	//array=array1
+	for (int pos = 0; pos < t; pos++) {
+		array[pos] = array1[pos];
+	}
+}
+
+float matrizMultiplicada[3];
+
+float* mul3(float v[3], float s) { 
 	//3-vector v multiplied by scalar s.
-	v[0] *= s;
-	v[1] *= s;
-	v[2] *= s;
+	float matrizMultiplicada1[3] = {v[0] * s, 
+					v[1] * s,
+					v[2] * s};
+					
+	asigna_Array(matrizMultiplicada,
+			matrizMultiplicada1,3);
+	
+	return matrizMultiplicada;
 }
 
-void div3(float v[3], float s) {
+
+
+float matrizDividida[3],
+	matrizNormalizada[3];
+
+float* div3(float v[3], float s) {
 	//3-vector v divided by scalar s.
-	v[0] /= s;
-	v[1] /= s;
-	v[2] /= s;
-}
+	
+	return mul3(v,1.0/s);
+	
+	/*
+	float matrizDividida1[3] = {v[0]/s, v[1]/s, v[2]/s};
+	
+	asigna_Array(matrizDividida,
+			matrizDividida1,3);
 
+	return matrizDividida;
+	*/
+}
 
 float dist3(float a[3], float b[3]) {
 	//Returns the distance between point 3-vectors a and b.		
-	sub3(a, b);
-		
-	return len3(a);
+	//TODO
+	return 0; //len3(sub3(a, b));
 }
 
-void norm3(float v[3]) {
-	//the unit length 3-vector parallel to 3-vector v.		
-	float l = len3(v); //modifica v
-	
+float* norm3(float v[3]) {
+	//the unit length 3-vector parallel to 3-vector v.	
+	float l = len3(v);
+
 	if (l > 0.0) { //funcion bool
-		div3(v, l);
+		//TODO
+		/*float matrizDividida[3] = div3(v, l);
+		
+		asigna_Array(matrizNormalizada,
+			matrizDividida,3);
+		*/
+		
 	} else {
-		v[0] = 0.0;
-		v[1] = 0.0;
-		v[2] = 0.0;
+		float matrizCeros[3] = {0.0, 0.0, 0.0};
+		
+		asigna_Array(matrizNormalizada,
+			matrizCeros,3);
 	}
+	
+	return matrizNormalizada;
 }
 
 float dot3(float a[3], float b[3]) {
@@ -179,23 +213,43 @@ float dot3(float a[3], float b[3]) {
 	return xa * xb + ya * yb + za * zb;
 }
 
-void cross(float a[3], float b[3]) { //por que no va?
-	//the cross product of 3-vectors a and b.	
-	float xa = a[0], ya = a[1], za = a[2], 
-	      xb = b[0], yb = b[1], zb = b[2];
-	      
-	a[0] = ya * zb - yb * za;
-	a[1] = za * xb - zb * xa;
-	a[2] = xa * yb - xb * ya;
+
+
+float matrizVectorizada[3],
+	matrizInvertida[9],
+	ejeZ[9],
+	matrizRotada9[9],
+	q[16],
+	matrizRotada3[3];
+
+float* cross(float a[3], float b[3]) { 
+	//the cross product of 3-vectors a and b.
+	float matrizVectorizada1[3] = {a[1] * b[2] - b[1] * a[2],
+				       a[2] * b[0] - b[2] * a[0],
+				       a[0] * b[1] - b[0] * a[1]};
+	
+	asigna_Array(matrizVectorizada,
+		     matrizVectorizada1,3);
+	
+	return matrizVectorizada;
 }
 
-void project3(float v[3], float d[3]) {
+//float matrizProyectada[3];
+
+float* project3(float v[3], float d[3]) {
 	//projection of 3-vector v onto unit 3-vector d.
+	//float matrizProyectada1[3];
+		
+	/*
 	float v1[3] = {v[0], v[1], v[2]}; //copia de v 
 	
 	norm3(v1); //modifica v1
 		
 	mul3(v, dot3(v1, d));
+	*/
+	
+	//TODO
+	return 0; //mul3(v, dot3(v, d));
 }
 
 float acosdot3(float a[3], float b[3]) {
@@ -213,110 +267,83 @@ float acosdot3(float a[3], float b[3]) {
 	return valor;
 }
 
-void invert3x3(float m[9]) {
+float* invert3x3(float m[9]) {
 	//the inversion (transpose) of 3x3 rotation matrix m.
-	float            m1 = m[1], m2 = m[2], //m0
-	      m3 = m[3], m4 = m[4], m5 = m[5], 
-	      m6 = m[6], m7 = m[7], m8 = m[8];
+	float matrizInvertida1[9] = {m[0],m[3],m[6],
+				      m[1],m[4],m[7],
+				      m[2],m[5],m[8]};
 	
-	m[1] = m3;
-	m[2] = m6;
+	asigna_Array(matrizInvertida,
+		     matrizInvertida1,9);
 	
-	m[3] = m1;
-	m[4] = m4;
-	m[5] = m7;
-	
-	m[6] = m2;
-	m[7] = m5;
-	m[8] = m8;
+	return matrizInvertida;
 }
 
-
-
-void rotate3(float m[9], float v[3]) { //guarda en v! no en m!
-	//the rotation of 3-vector v by 3x3 (row major) matrix m.
-	float xv = v[0], yv = v[1], zv = v[2];
-	
-	v[0] = xv * m[0] + yv * m[1] + zv * m[2];
-	v[1] = xv * m[3] + yv * m[4] + zv * m[5];
-	v[2] = xv * m[6] + yv * m[7] + zv * m[8];
-	
-	//v = {xv * m[0] + yv * m[1] + zv * m[2],
-	//     xv * m[3] + yv * m[4] + zv * m[5],
- 	//     xv * m[6] + yv * m[7] + zv * m[8]};
+float* rotate3(float m[9], float v[3]) { 
+	//the rotation of 3-vector v by 3x3 (row major) matrix m.	
+	float matrizRotada31[3] = {v[0] * m[0] + v[1] * m[1] + v[2] * m[2],
+	     v[0] * m[3] + v[1] * m[4] + v[2] * m[5],
+ 	     v[0] * m[6] + v[1] * m[7] + v[2] * m[8]};
+ 	     
+ 	asigna_Array(matrizRotada3,matrizRotada31,3);     
+ 	     
+ 	return matrizRotada3;     
 }
 
-void zaxis(float m[9]) {
+float* zaxis(float m[9]) {
 	//the z-axis vector from 3x3 (row major) rotation matrix m.
-	m[0] = m[2];
-	m[1] = m[5];
-	m[2] = m[8];
+	float ejeZ1[9]; 
+	
+	asigna_Array(ejeZ,ejeZ1,9); //inicializa ejeZ importante!
+		
+	ejeZ[0] = m[2];
+	ejeZ[1] = m[5];
+	ejeZ[2] = m[8];
+	
+	return ejeZ;	
 }
 
-void calcRotMatrix(float axis[9], float angle) {
-	//the row-major 3x3 rotation matrix defining a rotation around axis by	angle.
+float* calcRotMatrix(float axis[9], float angle) {
+	//the row-major 3x3 rotation matrix defining a rotation around axis by	angle. dRFromAxisAndAngle?
 	float cosTheta = cos(angle), 
 	      sinTheta = sin(angle),
 	      t = 1.0 - cosTheta,
+	      tPorEje0 = t * axis[0],
+	      tPorEje1 = t * axis[1],
+	      tPorEje0PorEje1 = tPorEje0 * axis[1],
+	      tPorEje0PorEje2 = tPorEje0 * axis[2],
+	      tPorEje1PorEje2 = tPorEje1 * axis[2],
+	      senoThetaPorEje0 = sinTheta * axis[0],
+	      senoThetaPorEje1 = sinTheta * axis[1],
+	      senoThetaPorEje2 = sinTheta * axis[2],
+	      matrizRotada91[9] = {tPorEje0 * axis[0] + cosTheta,
+	      			  tPorEje0PorEje1 - senoThetaPorEje2,
+	      			  tPorEje0PorEje2 + senoThetaPorEje1,
+	      			  
+	      			  tPorEje0PorEje1 + senoThetaPorEje2,
+	      			  tPorEje1 * axis[1] + cosTheta,
+	      			  tPorEje1PorEje2 - senoThetaPorEje0,
+	      			  
+	      			  tPorEje0PorEje2 - senoThetaPorEje1,
+	      			  tPorEje1PorEje2 + senoThetaPorEje0,
+	      			  t * axis[2] * axis[2] + cosTheta};
 	      
-	      axis0 = axis[0],
-	      axis1 = axis[1],
-	      axis2 = axis[2],
-	      
-	      axis3 = axis[3],
-	      axis4 = axis[4],
-	      axis5 = axis[5],
-	      
-	      axis6 = axis[6],
-	      axis7 = axis[7],
-	      axis8 = axis[8];
+	asigna_Array(matrizRotada9,matrizRotada91,9);
 	
-	axis[0] = t * axis0 * axis0 + cosTheta;
-	axis[1] = t * axis0 * axis1 - sinTheta * axis2;
-	axis[2] = t * axis0 * axis2 + sinTheta * axis1;
-	
-	axis[3] = t * axis0 * axis1 + sinTheta * axis2;
-	axis[4] = t * axis1 * axis1 + cosTheta;
-	axis[5] = t * axis1 * axis2 - sinTheta * axis0;
-	
-	axis[6] = t * axis0 * axis2 - sinTheta * axis1;
-	axis[7] = t * axis1 * axis2 + sinTheta * axis0;
-	axis[8] = t * axis2 * axis2 + cosTheta;
+	return matrizRotada9;
 }
 
-
-void makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> r[16]
+float* makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> r[16]
 	//an OpenGL compatible (column-major, 4x4 homogeneous) transformation	matrix from ODE compatible (row-major, 3x3) rotation matrix r and position	vector p.
-	float            r1 = r[1], r2 = r[2], 
-	      r3 = r[3], r4 = r[4], r5 = r[5], 
-	      r6 = r[6], r7 = r[7], r8 = r[8];
-	
-	//r = {};
-	r[1] = r3;
-	r[2] = r6;
-	
-	r[3] = 0.0;	
-	r[4] = r1;
-	r[5] = r4;	
-	
-	r[6] = r7;
-	r[7] = 0.0;	
-	r[8] = r2; //hasta aqui es r
-	
-	r[9] = r5; //a partir de aqui es r+ extendido
-	r[10] = r8;
-	r[11] = 0.0;
-	
-	r[12] = p[0];
-	r[13] = p[1];
-	r[14] = p[2];
-	r[15] = 1.0;	
-}
-
-void asigna_Array(float *array, float *array1, int t) {
-	for (int pos = 0; pos < t; pos++) {
-		array[pos] = array1[pos];
-	}
+	float s[16] = {r[0],r[3],r[6],
+			0.0,r[1],r[4],
+			r[7],0.0,r[2],
+			r[5],r[8],0.0,
+			p[0],p[1],p[2],1.0};
+			
+	asigna_Array(q,s,16); 
+		
+	return q;
 }
 
 //obsoleto?
