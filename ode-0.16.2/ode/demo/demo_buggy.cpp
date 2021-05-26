@@ -313,10 +313,15 @@ void makeOpenGLMatrix(float r[16], float p[3]) { //no puede ser float r[9] -> r[
 	r[15] = 1.0;	
 }
 
-void asigna_Array(float array[3], float array1[3]) {
-	array[0] = array1[0];
-	array[1] = array1[1];
-	array[2] = array1[2];
+void asigna_Array(float *array, float *array1, int t) {
+	for (int pos = 0; pos < t; pos++) {
+		array[pos] = array1[pos];
+	}
+}
+
+//obsoleto?
+void asigna_Array3(float array[3], float array1[3]) {
+	asigna_Array(array,array1,3);
 }
 
 //////////////////////////////////////
@@ -326,14 +331,10 @@ dJointID getJuntaRuedaDelantera() {
 }
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  /*
-	  // this is called by dSpaceCollide when two objects in space are
-	  // potentially colliding.
-	  */
 	  int i = 0, n = 0;
 
-	  bool g1 = (o1 == ground || o1 == ground_box); 	  // only collide things with the ground
-	  bool g2 = (o2 == ground || o2 == ground_box);
+	  bool g1 = (o1 == ground || o1 == ground_box), 	  // only collide things with the ground
+	  g2 = (o2 == ground || o2 == ground_box);
 	  
 	  if (g1 ^ g2) {
 		  const int N = 10;
@@ -343,8 +344,7 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 		  int sumaContactos = dContactSlip1   + dContactSlip2   +
 				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
 		  
-		  if (n > 0) {
-			    for (i = 0; i < n; i++) {
+			    for (i = 0; n>0 && i < n; i++) {
 			      contact[i].surface.mode = sumaContactos;
 			      
 			      contact[i].surface.mu = dInfinity;
@@ -358,7 +358,7 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 			      dJointAttach (c, dGeomGetBody(contact[i].geom.g1),
 					       dGeomGetBody(contact[i].geom.g2));
 			    }
-		  }
+
 	  }
 }
 
@@ -377,90 +377,8 @@ static void start() { // start simulation - set viewpoint
 			"\t' ' to reset speed and steering.\n");
 }
 
-bool estaConduciendoCoche = false;
-
-float vAbs(float v) {
-	if (v < 0) {
-		v *= -1.0;
-	}
-	
-	return v;
-}
-
-float escalarV_R = 0.3; // velocidad a la que rueda > vMin
-
-bool estaParadoCoche(float v) { //[0]
-	bool estaParado = false;
-	
-	if (v == 0) {
-		estaParado = true;
-	} 
-	
-	return estaParado;
-}
-
-bool estaV_MinCoche(float v) { //vAnormalmenteReducida
-	bool estaV_Min = false;
-	
-	if (not estaParadoCoche(v) and vAbs(v) < escalarV_R) {
-		estaV_Min = true; //frena
-	}
-	
-	return estaV_Min;
-}
-
-bool estaRodandoCoche(float v) {
-	bool estaRodando = false;
-	
-	if (vAbs(v) == escalarV_R) { //[vR]
-		estaRodando = true;
-	}
-	
-	return estaRodando;
-}
-
-//parado = 0, vAnormalmenteReducida = (abs(+-(0)), abs(+-vR)) (frenara solo), rodando = abs(+-vR), en marcha = [abs(+-vR), abs(+-inf))
-
 static void command (int cmd) {  // lower 
-	estaConduciendoCoche = true;
-		
-	if (cmd == 'w' || cmd == 'W') { // flechas //acelerador
-		if (estaParadoCoche(speed)) { // si esta parado en parking mete directa y empieza a rodar // puede estar rodando en neutral...
-			speed = escalarV_R; // mete directa y rueda hacia delante [vR]
-		} else {
-			if (estaRodandoCoche(speed)) { // si esta en marcha atras o en directa acelera
-				speed *= 1.3; // +-30%
-			} 
-		}
-	}
-			
-	if (cmd == 's' || cmd == 'S') { //freno / marcha atras
-		if (estaParadoCoche(speed) || speed >= escalarV_R) { //directa +
-			speed -= escalarV_R; // mete y rueda marcha atras   //frena hacia atras		
-		} else {
-			if (speed <= -escalarV_R) { //marcha atras // -
-				speed += escalarV_R; //frena hacia delante
-			}
-		}		
-	}
-	
-	if (cmd == ' ') { // espacio = freno de mano
-    		speed = 0; // bloquea las ruedas (el coche no tiene abs)
-  	}
-	
-	/////////// giro ///////////////
-	if (cmd == 'a' || cmd == 'A') { 
-		if (steer > -1.0) {
-	    		steer -= 0.5;
-    		}
-	}
-	
-	if (cmd == 'd' || cmd == 'D') {
-		if (steer < 1.0) {
-    			steer += 0.5;
-    		}
-	}
-	////////////////////////////////// 	
+					
 }
 
 int ciclosEspera = 20, cicloActual = 0;
@@ -469,43 +387,14 @@ int ciclosEspera = 20, cicloActual = 0;
 static void simLoop (int pause) { // simulation loop
    	int i = 0;
 	float vMax = 0.1;
-	
-	/////////// freno automatico ///////////////
-	if (estaV_MinCoche(speed)) { //velocidad anormalmente reducida (0, vR)
-		//tiraFrenoMano() //echaFrenoMano()
-		speed = 0;
-	}
-	////////////////////////////////////////////
-	
-	/////// funcion retardada corrige direccion ///////// 
-	if (cicloActual > ciclosEspera) { // por si nos hemos saltado algun ciclo	
-		if (estaConduciendoCoche) { //jugador.estaConduciendo(coche)
-			estaConduciendoCoche = false;
-		} else { //no esta conduciendo coche 
-			steer = 0;
-		}
-		
-		cicloActual = 0;
-	} else {
-		cicloActual++;
-	}
-	/////////////////////////////////////////////////
-	  
+		  
     	if (!pause) {
          	dJointSetHinge2Param (getJuntaRuedaDelantera(),  dParamVel2, -speed); // motor rueda/s delantera
          	dJointSetHinge2Param (getJuntaRuedaDelantera(), dParamFMax2,    0.1);
 
     	 	dReal v = steer - dJointGetHinge2Angle1 (getJuntaRuedaDelantera()); // steering
     
-    	 	if (v > vMax) {
-    		 	v = vMax;
-   	 	}
-    
-    	 	if (v < -vMax) { 
-    	 	 	v = -vMax;
-    	 	}
-    
-    	 	v *= 10.0;
+
     	 	
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
     	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
@@ -547,9 +436,7 @@ class Ragdoll {
 	dWorldID world; 
 	dSpaceID space;
 	float densidad = 0.0,
-	//arrayBodies
-	//arrayGeoms
-	//arrayJuntas
+
 	      totalMass = 0.0,
 		  offset[3] = {0.0, 0.0, 0.0}; //new float[3]
 	
@@ -558,7 +445,7 @@ class Ragdoll {
 		world = w;
 		space = s;
 		densidad = d;
-		asigna_Array(offset, o); //offset = {o[0],o[1],o[2]};
+		asigna_Array3(offset, o); //offset = {o[0],o[1],o[2]};
 		
 	}
 	
@@ -681,38 +568,38 @@ int main (int argc, char **argv) {
 	//////////// variables ragdoll ////////////
 	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0};
 	sub3(R_SHOULDER_POS, largoAntebrazo);
-	asigna_Array(R_ELBOW_POS, R_SHOULDER_POS);
+	asigna_Array3(R_ELBOW_POS, R_SHOULDER_POS);
 
 	add3(L_SHOULDER_POS, largoAntebrazo);	
-	asigna_Array(L_ELBOW_POS, L_SHOULDER_POS);
+	asigna_Array3(L_ELBOW_POS, L_SHOULDER_POS);
 	
 	float largoBrazo[3] = {FORE_ARM_LEN, 0.0, 0.0};
 	sub3(R_ELBOW_POS, largoBrazo);
-	asigna_Array(R_WRIST_POS, R_ELBOW_POS);
+	asigna_Array3(R_WRIST_POS, R_ELBOW_POS);
 	
 	add3(L_ELBOW_POS, largoBrazo);
-	asigna_Array(L_WRIST_POS, L_ELBOW_POS);
+	asigna_Array3(L_WRIST_POS, L_ELBOW_POS);
 	
 	float largoMano[3] = {HAND_LEN, 0.0, 0.0};
 	sub3(R_WRIST_POS, largoMano);
-	asigna_Array(R_FINGERS_POS, R_WRIST_POS);
+	asigna_Array3(R_FINGERS_POS, R_WRIST_POS);
 	
 	add3(L_WRIST_POS, largoMano);
-	asigna_Array(L_FINGERS_POS, L_WRIST_POS);
+	asigna_Array3(L_FINGERS_POS, L_WRIST_POS);
 
 	float largoTobillo[3] = {0.0, 0.0, HEEL_LEN};
 	sub3(R_ANKLE_POS, largoTobillo);
-	asigna_Array(R_HEEL_POS, R_ANKLE_POS);
+	asigna_Array3(R_HEEL_POS, R_ANKLE_POS);
 	
 	sub3(L_ANKLE_POS, largoTobillo);
-	asigna_Array(L_HEEL_POS, L_ANKLE_POS);
+	asigna_Array3(L_HEEL_POS, L_ANKLE_POS);
 
 	float largoPie[3] = {0.0, 0.0, FOOT_LEN};
 	add3(R_ANKLE_POS, largoPie);
-	asigna_Array(R_TOES_POS, R_ANKLE_POS);
+	asigna_Array3(R_TOES_POS, R_ANKLE_POS);
 	
 	add3(L_ANKLE_POS, largoPie);
-	asigna_Array(L_TOES_POS, R_TOES_POS);
+	asigna_Array3(L_TOES_POS, R_TOES_POS);
 	
 	
 	//////////// fin variables ragdoll ///////////////
@@ -754,8 +641,7 @@ int main (int argc, char **argv) {
   	
   	dGeomSetBody   (box[0], body[0]);
 
-  	for (i = 1; i < 4; i++) {   	// wheel bodies
-  		
+  	for (i = 1; i < 4; i++) {   	 		
   		cuerpos[i] = Cuerpo(world);
   		body[i] = cuerpos[i].getID(); 
 		
