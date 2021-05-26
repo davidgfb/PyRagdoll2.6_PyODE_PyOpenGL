@@ -102,7 +102,8 @@ demo_buggy.o: demo_buggy.cpp /usr/include/stdc-predef.h \
  ../../include/ode/threading_impl.h ../../include/ode/export-dif.h \
  ../../include/ode/version.h ../../include/ode/odecpp.h \
  ../../include/ode/odecpp_collision.h ../../include/drawstuff/drawstuff.h \
- ../../include/drawstuff/version.h texturepath.h Ragdoll.h Ragdoll.cpp
+ ../../include/drawstuff/version.h texturepath.h Ragdoll.h Ragdoll.cpp \
+ Caja.cpp Espacio.cpp Cuerpo.cpp Junta.cpp
 
 /usr/include/stdc-predef.h:
 
@@ -369,3 +370,11 @@ texturepath.h:
 Ragdoll.h:
 
 Ragdoll.cpp:
+
+Caja.cpp:
+
+Espacio.cpp:
+
+Cuerpo.cpp:
+
+Junta.cpp:

@@ -7,6 +7,10 @@ this also shows you how to use geom groups.
 #include "texturepath.h"
 #include "Ragdoll.h"
 #include "Ragdoll.cpp"
+#include "Caja.cpp"
+#include "Espacio.cpp"
+#include "Cuerpo.cpp"
+#include "Junta.cpp"
 
 float   LENGTH = 0.7, 
 	WIDTH = 0.5, 
@@ -27,6 +31,8 @@ dJointGroupID ID_GrupoJunta;
 dGeomID ground, ID_GeomsCajas[1], IDs_GeomsEsferas[3], ID_GeomRampa;
 dReal speed = 0, 
 		steer = 0; // things that the user controls // user commands
+
+Cuerpo cuerpos[3];
 
 dJointID getJuntaRuedaDelantera() {
 	return IDs_Juntas[0];
@@ -64,15 +70,14 @@ static void nearCallback (void *, dGeomID o1, dGeomID o2) {
 	  }
 }
 
-static void start() { // start simulation - set viewpoint
-	  static float pos[3] = {1, -1, 1}, // array3d de floats 
+void start() { 
+	  float pos[3] = {1, -1, 1}, 
 	               rot[3] = {121.0, -27.5, 0.0};
 	  
 	  dsSetViewpoint(pos, rot);
 }
 
-////////////////// simLoop ////////////////////////
-static void simLoop (int pause) { // simulation loop		
+void simLoop (int pause) { // simulation loop		
 	dJointID juntaRuedaDelanteraCoche = getJuntaRuedaDelantera();	
 		  
     	if (!pause) {
@@ -90,7 +95,7 @@ static void simLoop (int pause) { // simulation loop
     	 	dSpaceCollide(ID_Espacio,    0, &nearCallback);
     	 	dWorldStep(ID_Mundo, 0.05);
 
-    	 	dJointGroupEmpty(ID_GrupoJunta); // remove all contact joints
+    	 	dJointGroupEmpty(ID_GrupoJunta); //
     	}
 
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
@@ -110,164 +115,10 @@ static void simLoop (int pause) { // simulation loop
   	
   	dsDrawBox (dGeomGetPosition(ID_GeomRampa), dGeomGetRotation(ID_GeomRampa), dimensionesLateralesCaja);
 }
-////////////////// fin simLoop ////////////////////
-
-///////////////////// ragdoll /////////////////////
-
-
-class Ragdoll {
-	//Creates a ragdoll of standard size at the given offset.	
-	dWorldID ID_Mundo; 
-	dSpaceID ID_Espacio;
-	float densidad = 0.0,
-	      masaTotal = 0.0,
-	      offset[3] = {0.0, 0.0, 0.0}; //new float[3]
-	
-	public:	
-		Ragdoll(dWorldID pID_Mundo, dSpaceID pID_Espacio, float pDensidad, float pOffset[3]) { //no densidad		
-			ID_Mundo = pID_Mundo;
-			ID_Espacio = pID_Espacio;
-			densidad = pDensidad;
-			asigna_Array3(offset, pOffset);			
-		}
-		
-		//sobrecarga para tener parametro offset definido por defecto
-		Ragdoll(dWorldID pID_Mundo, dSpaceID pID_Espacio, float pDensidad) {
-			float offset[3] = {0.0, 0.0, 0.0};
-			Ragdoll(ID_Mundo, pID_Espacio, pDensidad, offset);
-		}
-		
-		void annadeCuerpo(float p_P[3], float p_P1[3], float pRadio) {
-			//Adds a capsule body between joint positions p1 and p2 and with given radius to the ragdoll.
-			add3(p_P, offset);
-			add3(p_P1, offset);
-			
-			//cylinder length not including endcaps, make capsules overlap by half radius at joints
-			float longCilindro = dist3(p_P, p_P1) - pRadio; //largo cilindro
-		
-			dBodyID ID_Cuerpo = dBodyCreate(ID_Mundo);
-		
-			dMass masa; 
-			
-			dMassSetCylinder(&masa, densidad, 3, pRadio, longCilindro); //dCreateCapsule? //3=eje z //m.
-		}
-};
-
-
-class Caja {
-	dGeomID ID;
-
-	public:
-		Caja(dSpaceID pID_Espacio, dReal dx, dReal dy, dReal dz, dMatrix3 R) {
-			ID = dCreateBox(pID_Espacio, dx, dy, dz);   
-			dGeomSetPosition(ID, 2, 0, -0.34);
-  			dGeomSetRotation(ID, R);
-		}
-		
-		dGeomID getID() {
-			return ID;
-		}
-};
-
-class Espacio {
-	dSpaceID ID;
-
-	public:
-		Espacio(dSpaceID pID_Espacio) {
-			ID = dSimpleSpaceCreate (pID_Espacio);   	// create car space and add it to the top level space
-		}
-		
-		dSpaceID getID() {
-			return ID;
-		}
-		
-		void annade(dSpaceID ID, dGeomID ID_Geom) {
-			dSpaceAdd (ID, ID_Geom);
-		}
-};
-
-class Cuerpo {
-	//dReal *posicion;
-	dBodyID ID;
-
-	public:
-		Cuerpo() {
-		
-		}
-	
-		Cuerpo(dWorldID ID_Mundo) {
-			ID = dBodyCreate(ID_Mundo);
-		}
-		
-		void setPosicion(dBodyID pID, dReal x, dReal y, dReal z) {					
-			dBodySetPosition(pID,x,y,z);
-		}
-		
-		void setMasa(dBodyID ID, dMass *mass) { 
-			dBodySetMass(ID,mass);
-		}
-		
-		void setQuaternion(dBodyID ID, dQuaternion q) {
-			dBodySetQuaternion(ID,q);
-		}
-				
-		dBodyID getID() {
-			return ID;
-		}
-		
-		/*
-		dReal* getPosicion() {
-			return dBodyGetPosition(ID);
-		}
-		*/		
-};
-
-class Junta {
-	public:
-		Junta() {
-		
-		}
-		
-		void setAnclaBisagra2(dJointID ID, dReal x, dReal y, dReal z) { 
-			dJointSetHinge2Anchor (ID,  x,  y, z);
-		}
-		
-		void setEjesBisagra2(dJointID ID, const dReal* eje, const dReal* eje1) {
-			dJointSetHinge2Axes(ID,eje,eje1); 
-		}
-		
-		void setParamsBisagra2(dJointID ID, int parameter, dReal value) {
-			dJointSetHinge2Param(ID,parameter,value);
-		}
-};
-
-Cuerpo cuerpos[3];
 
 //clase Coche, Moto...
 
-/////////////// main ///////////////////////
-int main (int argc, char **argv) {
-	//////////// asignacion variables ragdoll ////////////
-	float largoAntebrazo[3] = {UPPER_ARM_LEN, 0.0, 0.0},
-		largoBrazo[3] = {FORE_ARM_LEN, 0.0, 0.0},
-		largoMano[3] = {HAND_LEN, 0.0, 0.0},
-		largoTobillo[3] = {0.0, 0.0, HEEL_LEN},
-		largoPie[3] = {0.0, 0.0, FOOT_LEN};
-			
-	asigna_Array3(R_ELBOW_POS, sub3(R_SHOULDER_POS, largoAntebrazo));	
-	asigna_Array3(L_ELBOW_POS, add3(L_SHOULDER_POS, largoAntebrazo));	
-	asigna_Array3(R_WRIST_POS, sub3(R_ELBOW_POS, largoBrazo));	
-	asigna_Array3(L_WRIST_POS, add3(L_ELBOW_POS, largoBrazo));	
-	asigna_Array3(R_FINGERS_POS, sub3(R_WRIST_POS, largoMano));	
-	asigna_Array3(L_FINGERS_POS, add3(L_WRIST_POS, largoMano));
-	asigna_Array3(R_HEEL_POS, sub3(R_ANKLE_POS, largoTobillo));	
-	asigna_Array3(L_HEEL_POS, sub3(L_ANKLE_POS, largoTobillo));
-	asigna_Array3(R_TOES_POS, add3(R_ANKLE_POS, largoPie));
-	
-	add3(L_ANKLE_POS, largoPie); //mal
-	asigna_Array3(L_TOES_POS, R_TOES_POS);	
-	//////////// fin asignacion variables ragdoll ///////////////
-  	
+int main(int argc, char **argv) {  	
   	dMass m;
 
   	dsFunctions llamadas_Simulacion;
