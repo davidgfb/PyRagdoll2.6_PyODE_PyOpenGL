@@ -2,6 +2,7 @@
 buggy with suspension.
 this also shows you how to use geom groups.
 */
+
 #include <ode/ode.h>
 #include <drawstuff/drawstuff.h>
 #include "texturepath.h"
@@ -11,14 +12,7 @@ this also shows you how to use geom groups.
 #include "Espacio.cpp"
 #include "Cuerpo.cpp"
 #include "Junta.cpp"
-
-float   LENGTH = 0.7, 
-	WIDTH = 0.5, 
-	HEIGHT = 0.2, 
-	RADIUS = 0.18, 
-	STARTZ = 0.5, 
-	CMASS = 1.0, 
-	WMASS = 0.2; // some constants
+#include "Demo_Buggy.h"
 
 dVector3 yunit = {0, 1, 0}, 
 			zunit = {0, 0, 1};
@@ -80,23 +74,16 @@ void start() {
 void simLoop (int pause) { // simulation loop		
 	dJointID juntaRuedaDelanteraCoche = getJuntaRuedaDelantera();	
 		  
-    	if (!pause) {
-         	dJointSetHinge2Param (juntaRuedaDelanteraCoche,  dParamVel2, -speed); // motor rueda/s delantera
-         	dJointSetHinge2Param (juntaRuedaDelanteraCoche, dParamFMax2,    0.1);
+         	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFMax2, 0.1);    	 	
+    	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFMax, 0.2);
+    	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamLoStop, -0.75);
+    	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamHiStop, 0.75);
+    	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFudgeFactor, 0.1);
 
-    	 	dReal v = steer - dJointGetHinge2Angle1 (getJuntaRuedaDelantera()); // steering
-     	 	
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),         dParamVel,     v);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),        dParamFMax,   0.2);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamLoStop, -0.75);
-    	 	dJointSetHinge2Param (getJuntaRuedaDelantera(),      dParamHiStop,  0.75);
-    	 	dJointSetHinge2Param (juntaRuedaDelanteraCoche, dParamFudgeFactor,   0.1);
-
-    	 	dSpaceCollide(ID_Espacio,    0, &nearCallback);
+    	 	dSpaceCollide(ID_Espacio, 0, &nearCallback);
     	 	dWorldStep(ID_Mundo, 0.05);
 
     	 	dJointGroupEmpty(ID_GrupoJunta); //
-    	}
 
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
   	

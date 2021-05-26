@@ -103,7 +103,7 @@ demo_buggy.o: demo_buggy.cpp /usr/include/stdc-predef.h \
  ../../include/ode/version.h ../../include/ode/odecpp.h \
  ../../include/ode/odecpp_collision.h ../../include/drawstuff/drawstuff.h \
  ../../include/drawstuff/version.h texturepath.h Ragdoll.h Ragdoll.cpp \
- Caja.cpp Espacio.cpp Cuerpo.cpp Junta.cpp
+ Caja.cpp Espacio.cpp Cuerpo.cpp Junta.cpp Demo_Buggy.h
 
 /usr/include/stdc-predef.h:
 
@@ -378,3 +378,5 @@ Espacio.cpp:
 Cuerpo.cpp:
 
 Junta.cpp:
+
+Demo_Buggy.h:
