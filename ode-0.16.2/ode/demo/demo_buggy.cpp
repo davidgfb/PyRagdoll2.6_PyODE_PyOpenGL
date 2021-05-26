@@ -5,6 +5,7 @@ this also shows you how to use geom groups.
 #include <ode/ode.h>
 #include <drawstuff/drawstuff.h>
 #include "texturepath.h"
+#include "Ragdoll.h"
 
 //////////// variables ////////////////////
 float   LENGTH = 0.7, 
@@ -29,64 +30,17 @@ static dReal    speed = 0,
 ///////////////////////////////////////////
 
 //////////////// variables ragdoll /////////////
-//rotation directions are named by the third (z-axis) row of the 3x3 matrix, because ODE capsules are oriented along the z-axis
-float rightRot[9] = {0.0, 0.0, -1.0, 0.0, 1.0, 0.0, 1.0, 0.0, 0.0},
-      leftRot[9]  = {0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -1.0, 0.0, 0.0},
-      upRot[9]    = {1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0},
-      downRot[9]  = {1.0, 0.0, 0.0, 0.0, 0.0, -1.0, 0.0, 1.0, 0.0},
-      bkwdRot[9]  = {1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
+float R_ELBOW_POS[3],
+	L_ELBOW_POS[3],
+	R_WRIST_POS[3],
+	L_WRIST_POS[3],
+	R_FINGERS_POS[3],
+	L_FINGERS_POS[3],
 
-//axes used to determine constrained joint rotations
-rightAxis[3] = { 1.0,  0.0,  0.0},
-leftAxis[3]  = {-1.0,  0.0,  0.0},
-upAxis[3]    = { 0.0,  1.0,  0.0},
-downAxis[3]  = { 0.0, -1.0,  0.0},
-bkwdAxis[3]  = { 0.0,  0.0,  1.0},
-fwdAxis[3]   = { 0.0,  0.0, -1.0},
-
-UPPER_ARM_LEN =  0.3,
-FORE_ARM_LEN  = 0.25,
-HAND_LEN      = 0.13, // wrist to mid-fingers only
-FOOT_LEN      = 0.18, //ankles to base of ball of foot only
-HEEL_LEN      = 0.05,
-
-BROW_H     = 1.68,
-MOUTH_H    = 1.53,
-NECK_H     =  1.5,
-SHOULDER_H = 1.37,
-CHEST_H    = 1.35,
-HIP_H      = 0.86,
-KNEE_H     = 0.48,
-ANKLE_H    = 0.08,
-
-SHOULDER_W = 0.41,
-CHEST_W    = 0.36, // actually wider, but we want narrower than shoulders (esp. with large radius)
-LEG_W      = 0.28, // between middles of upper legs
-PELVIS_W   = 0.25, // actually wider, but we want smaller than hip width;
-
-R_SHOULDER_POS[3] = {(float) (SHOULDER_W / -2.0), SHOULDER_H, 0.0},
-L_SHOULDER_POS[3] = {(float) (SHOULDER_W / 2.0), SHOULDER_H, 0.0},
-
-R_ELBOW_POS[3],
-L_ELBOW_POS[3],
-R_WRIST_POS[3],
-L_WRIST_POS[3],
-R_FINGERS_POS[3],
-L_FINGERS_POS[3],
-
-R_HIP_POS[3]   = {(float) (LEG_W / -2.0),   HIP_H, 0.0},
-L_HIP_POS[3]   = {(float) (LEG_W /  2.0),   HIP_H, 0.0},
-R_KNEE_POS[3]  = {(float) (LEG_W / -2.0),  KNEE_H, 0.0},
-L_KNEE_POS[3]  = {(float) (LEG_W /  2.0),  KNEE_H, 0.0},
-R_ANKLE_POS[3] = {(float) (LEG_W / -2.0), ANKLE_H, 0.0},
-L_ANKLE_POS[3] = {(float) (LEG_W /  2.0), ANKLE_H, 0.0},
-
-R_HEEL_POS[3],
-L_HEEL_POS[3],
-R_TOES_POS[3],
-L_TOES_POS[3];
-
-
+	R_HEEL_POS[3],
+	L_HEEL_POS[3],
+	R_TOES_POS[3],
+	L_TOES_POS[3];
 ////////////////////////////////////////////////
 
 bool esPositivo(float x) {
@@ -432,46 +386,41 @@ static void simLoop (int pause) { // simulation loop
 
 
 class Ragdoll {
-	//Creates a ragdoll of standard size at the given offset.
-	//constructor
-	//public: 	
-	
+	//Creates a ragdoll of standard size at the given offset.	
 	dWorldID ID_Mundo; 
 	dSpaceID ID_Espacio;
 	float densidad = 0.0,
-
-	      totalMass = 0.0,
-		  offset[3] = {0.0, 0.0, 0.0}; //new float[3]
+	      masaTotal = 0.0,
+	      offset[3] = {0.0, 0.0, 0.0}; //new float[3]
 	
-	
-	Ragdoll(dWorldID w, dSpaceID s, float d, float o[3]) { //no densidad		
-		ID_Mundo = w;
-		ID_Espacio = s;
-		densidad = d;
-		asigna_Array3(offset, o); //offset = {o[0],o[1],o[2]};
+	public:	
+		Ragdoll(dWorldID pID_Mundo, dSpaceID pID_Espacio, float pDensidad, float pOffset[3]) { //no densidad		
+			ID_Mundo = pID_Mundo;
+			ID_Espacio = pID_Espacio;
+			densidad = pDensidad;
+			asigna_Array3(offset, pOffset);			
+		}
 		
-	}
-	
-	//sobrecarga para tener parametro offset definido por defecto
-	Ragdoll(dWorldID ID_Mundo, dSpaceID pID_Espacio, float density) {
-		float offset[3] = {0.0, 0.0, 0.0};
-		Ragdoll(ID_Mundo,pID_Espacio,density,offset);
-	}
-	
-	void addBody(float p1[3], float p2[3], float radius) {
-		//Adds a capsule body between joint positions p1 and p2 and with given radius to the ragdoll.
-		add3(p1, offset);
-		add3(p2, offset);
+		//sobrecarga para tener parametro offset definido por defecto
+		Ragdoll(dWorldID pID_Mundo, dSpaceID pID_Espacio, float pDensidad) {
+			float offset[3] = {0.0, 0.0, 0.0};
+			Ragdoll(ID_Mundo, pID_Espacio, pDensidad, offset);
+		}
 		
-		//cylinder length not including endcaps, make capsules overlap by half radius at joints
-		float cyllen = dist3(p1, p2) - radius; //largo cilindro
-	
-		dBodyID body = dBodyCreate(ID_Mundo);
-	
-		dMass m; 
+		void annadeCuerpo(float p_P[3], float p_P1[3], float pRadio) {
+			//Adds a capsule body between joint positions p1 and p2 and with given radius to the ragdoll.
+			add3(p_P, offset);
+			add3(p_P1, offset);
+			
+			//cylinder length not including endcaps, make capsules overlap by half radius at joints
+			float longCilindro = dist3(p_P, p_P1) - pRadio; //largo cilindro
 		
-		dMassSetCylinder(&m,densidad,3,radius,cyllen); //dCreateCapsule? //3=eje z //m.
-	}
+			dBodyID ID_Cuerpo = dBodyCreate(ID_Mundo);
+		
+			dMass masa; 
+			
+			dMassSetCylinder(&masa, densidad, 3, pRadio, longCilindro); //dCreateCapsule? //3=eje z //m.
+		}
 };
 
 
@@ -713,6 +662,8 @@ int main (int argc, char **argv) {
   	ID_GeomRampa = caja.getID();
 
   	dsSimulationLoop (argc, argv, 800, 600, &llamadas_Simulacion);
+  	
+  	//printf("%s\n",saludo); //saludo en ragdoll.h
   	
   	return 0;
 }
