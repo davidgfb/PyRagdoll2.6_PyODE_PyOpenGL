@@ -30,6 +30,7 @@ float dxCaja = 2,
 	  	yCaja = 0,
 	  	zCaja = 0.34,
 	  	posCaja[3] = {2, 0, -0.34};
+dMatrix3 rotCaja;
 
 Coche coche;
 
@@ -101,7 +102,7 @@ void simLoop (int pause) { // simulation loop
   	dVector3 dimensionesLateralesCaja;
   	dGeomBoxGetLengths(ID_GeomRampa, dimensionesLateralesCaja);
   	
-  	dsDrawBox(posCaja, dGeomGetRotation(ID_GeomRampa), dimensionesLateralesCaja);
+  	dsDrawBox(posCaja, rotCaja, dimensionesLateralesCaja);
 }
 
 //clase Moto...
@@ -128,10 +129,9 @@ int main(int argc, char **argv) {
 			
   	coche = Coche(ID_Mundo,IDs_Cuerpos,zunit,yunit,ID_Espacio);
 
-  	dMatrix3 R;
-  	dRFromAxisAndAngle (R, 0, 1, 0, -0.15);
+  	dRFromAxisAndAngle (rotCaja, 0, 1, 0, -0.15);
   		
-  	Caja caja = Caja(ID_Espacio, dxCaja, dyCaja, dzCaja, xCaja, yCaja, zCaja, R); 	//rampa  	
+  	Caja caja = Caja(ID_Espacio, dxCaja, dyCaja, dzCaja, xCaja, yCaja, zCaja, rotCaja); 	//rampa  	
   	ID_GeomRampa = caja.getID();
 
   	dsSimulationLoop(argc, argv, 800, 600, &llamadas_Simulacion);
