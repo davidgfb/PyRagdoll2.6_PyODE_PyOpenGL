@@ -11,6 +11,7 @@ this also shows you how to use geom groups.
 #include "Cuerpo.cpp"
 #include "Junta.cpp"
 #include "Coche.cpp"
+#include "Semaforo.cpp"
 //#include "Demo_Buggy.h"
 
 dVector3 yunit = {0, 1, 0}, 
@@ -74,15 +75,7 @@ void start() {
 	  dsSetViewpoint(pos, rot);
 }
 
-//semaforo
-int nFotograma = 0,
-	nFotogramas = 600;
-	
-float posEsferaRoja[3] = {0,0,1},
-	rotEsferaRoja[12] = {1.0,0.0,0.0,0.0,0.0,
- 			1.0,0.0,0.0,0.0,0.0,
- 			1.0,0.0};
-//fin semaforo
+
  			
 void simLoop (int pause) { // simulation loop		
 	dJointID juntaRuedaDelanteraCoche = coche.getID_JuntaRuedaDelantera();	
@@ -102,22 +95,7 @@ void simLoop (int pause) { // simulation loop
   	dReal sides[3] = {LENGTH, WIDTH, HEIGHT}; 	
   	dBodyID ID_Cuerpo0 = IDs_Cuerpos[0];
    	  
-   	//cambia Semaforo  			
- 	if (2.0 * nFotograma < nFotogramas) { 
- 		dsSetColor(1,0,0); //rojo
- 	} else { //>= 		
- 		dsSetColor(0,1,0); //verde	
- 	}
- 	
- 	if (nFotograma > nFotogramas) {
- 		nFotograma = 0;
- 	} else {
- 		 nFotograma++;
- 	}
-			 
-  	dsDrawSphere(posEsferaRoja, rotEsferaRoja, 0.1); 
-  	dsSetColor(1,1,1); //blanco (gris)
-  	//fin cambia Semaforo 
+   	cambiaSemaforo();
   	
   	dsDrawBox(dBodyGetPosition(ID_Cuerpo0), dBodyGetRotation(ID_Cuerpo0), sides);
   	
