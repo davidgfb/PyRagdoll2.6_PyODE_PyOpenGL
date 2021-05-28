@@ -12,38 +12,37 @@ this also shows you how to use geom groups.
 #include "Junta.cpp"
 #include "Coche.cpp"
 #include "Semaforo.cpp"
-//#include "Demo_Buggy.h"
 
 dVector3 yunit = {0, 1, 0}, 
 			zunit = {0, 0, 1};
 dWorldID ID_Mundo; 
 
 dBodyID IDs_Cuerpos[4];
-dJointID IDs_Juntas[3]; 
 dJointGroupID ID_GrupoJunta;
 dGeomID ID_GeomSuelo, 	 
 	ID_GeomRampa;
 dSpaceID ID_Espacio;
 float dxCaja = 2,
-	  	dyCaja = 2,
+	  	dyCaja = dxCaja,
 	  	dzCaja = 1,
-	  	xCaja = 2,
+	  	
+	  	xCaja = dxCaja,
 	  	yCaja = 0,
 	  	zCaja = -0.34,
+	  	
 	  	posCaja[3] = {xCaja, yCaja, zCaja},
-	  	dimsCaja[3] = {dxCaja,dyCaja,dzCaja};
+	  	dimsCaja[3] = {dxCaja, dyCaja, dzCaja};
 dMatrix3 rotCaja;
 
 Coche coche;
 
 static void nearCallback (void *, dGeomID o1, dGeomID o2) {
-	  int nContactos = 0;
 	  bool g1 = (o1 == ID_GeomSuelo || o1 == ID_GeomRampa), 	  // only collide things with the ground
 	  		g2 = (o2 == ID_GeomSuelo || o2 == ID_GeomRampa);
 	  
 	  if (g1 ^ g2) {
 		  dContact contactos[10];
-		  nContactos = dCollide (o1, o2, 10, &contactos[0].geom, sizeof(dContact));
+		  int nContactos = dCollide (o1, o2, 10, &contactos[0].geom, sizeof(dContact));
 		  
 		  int sumaContactos = dContactSlip1 + dContactSlip2 +
 				      dContactSoftERP + dContactSoftCFM + dContactApprox1;
@@ -74,18 +73,23 @@ void start() {
 	  
 	  dsSetViewpoint(pos, rot);
 }
-
-
- 			
-void simLoop (int pause) { // simulation loop		
+		
+float speed = 1.5;
+			
+void simLoop (int pause) { 	
 	dJointID juntaRuedaDelanteraCoche = coche.getID_JuntaRuedaDelantera();	
-		  
+		
+	dJointSetHinge2Param (juntaRuedaDelanteraCoche,dParamVel2,-speed);
+    dJointSetHinge2Param (juntaRuedaDelanteraCoche,dParamFMax2,0.1);
+	
+		/*  
          	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFMax2, 0.1);    	 	
     	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFMax, 0.2);
     	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamLoStop, -0.75);
     	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamHiStop, 0.75);
     	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFudgeFactor, 0.1);
-
+		*/
+		
     	 	dSpaceCollide(ID_Espacio, 0, &nearCallback);
     	 	dWorldStep(ID_Mundo, 0.05); //10 g?
 
@@ -99,10 +103,11 @@ void simLoop (int pause) { // simulation loop
   	
   	dsDrawBox(dBodyGetPosition(ID_Cuerpo0), dBodyGetRotation(ID_Cuerpo0), sides);
   	
-	for (int i = 1; i < 4; i++) {
+	for (int i = 0; i < 4; i++) {
 		dBodyID ID_Cuerpo = IDs_Cuerpos[i];
-  		 dsDrawCylinder(dBodyGetPosition(ID_Cuerpo),
-				 dBodyGetRotation(ID_Cuerpo), 0.02, RADIUS);
+  		dsDrawCylinder(dBodyGetPosition(ID_Cuerpo),
+			       dBodyGetRotation(ID_Cuerpo), 
+			       0.02, RADIUS);
 	}
   	
   	dsDrawBox(posCaja, rotCaja, dimsCaja);
