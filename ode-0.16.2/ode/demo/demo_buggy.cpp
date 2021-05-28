@@ -28,8 +28,9 @@ float dxCaja = 2,
 	  	dzCaja = 1,
 	  	xCaja = 2,
 	  	yCaja = 0,
-	  	zCaja = 0.34,
-	  	posCaja[3] = {2, 0, -0.34};
+	  	zCaja = -0.34,
+	  	posCaja[3] = {xCaja, yCaja, zCaja},
+	  	dimsCaja[3] = {dxCaja,dyCaja,dzCaja};
 dMatrix3 rotCaja;
 
 Coche coche;
@@ -73,6 +74,16 @@ void start() {
 	  dsSetViewpoint(pos, rot);
 }
 
+//semaforo
+int nFotograma = 0,
+	nFotogramas = 600;
+	
+float posEsferaRoja[3] = {0,0,1},
+	rotEsferaRoja[12] = {1.0,0.0,0.0,0.0,0.0,
+ 			1.0,0.0,0.0,0.0,0.0,
+ 			1.0,0.0};
+//fin semaforo
+ 			
 void simLoop (int pause) { // simulation loop		
 	dJointID juntaRuedaDelanteraCoche = coche.getID_JuntaRuedaDelantera();	
 		  
@@ -83,26 +94,40 @@ void simLoop (int pause) { // simulation loop
     	 	dJointSetHinge2Param(juntaRuedaDelanteraCoche, dParamFudgeFactor, 0.1);
 
     	 	dSpaceCollide(ID_Espacio, 0, &nearCallback);
-    	 	dWorldStep(ID_Mundo, 0.05);
+    	 	dWorldStep(ID_Mundo, 0.05); //10 g?
 
     	 	dJointGroupEmpty(ID_GrupoJunta); //
 
-  	dReal sides[3] = {LENGTH, WIDTH, HEIGHT};
-  	
+
+  	dReal sides[3] = {LENGTH, WIDTH, HEIGHT}; 	
   	dBodyID ID_Cuerpo0 = IDs_Cuerpos[0];
+   	  
+   	//cambia Semaforo  			
+ 	if (2.0 * nFotograma < nFotogramas) { 
+ 		dsSetColor(1,0,0); //rojo
+ 	} else { //>= 		
+ 		dsSetColor(0,1,0); //verde	
+ 	}
+ 	
+ 	if (nFotograma > nFotogramas) {
+ 		nFotograma = 0;
+ 	} else {
+ 		 nFotograma++;
+ 	}
+			 
+  	dsDrawSphere(posEsferaRoja, rotEsferaRoja, 0.1); 
+  	dsSetColor(1,1,1); //blanco (gris)
+  	//fin cambia Semaforo 
   	
   	dsDrawBox(dBodyGetPosition(ID_Cuerpo0), dBodyGetRotation(ID_Cuerpo0), sides);
-  		
+  	
 	for (int i = 1; i < 4; i++) {
 		dBodyID ID_Cuerpo = IDs_Cuerpos[i];
   		 dsDrawCylinder(dBodyGetPosition(ID_Cuerpo),
 				 dBodyGetRotation(ID_Cuerpo), 0.02, RADIUS);
 	}
-
-  	dVector3 dimensionesLateralesCaja;
-  	dGeomBoxGetLengths(ID_GeomRampa, dimensionesLateralesCaja);
   	
-  	dsDrawBox(posCaja, rotCaja, dimensionesLateralesCaja);
+  	dsDrawBox(posCaja, rotCaja, dimsCaja);
 }
 
 //clase Moto...
@@ -131,8 +156,8 @@ int main(int argc, char **argv) {
 
   	dRFromAxisAndAngle (rotCaja, 0, 1, 0, -0.15);
   		
-  	Caja caja = Caja(ID_Espacio, dxCaja, dyCaja, dzCaja, xCaja, yCaja, zCaja, rotCaja); 	//rampa  	
-  	ID_GeomRampa = caja.getID();
+  	Caja rampa = Caja(ID_Espacio, dxCaja, dyCaja, dzCaja, xCaja, yCaja, zCaja, rotCaja); 	  	
+  	ID_GeomRampa = rampa.getID();
 
   	dsSimulationLoop(argc, argv, 800, 600, &llamadas_Simulacion);
   	  	

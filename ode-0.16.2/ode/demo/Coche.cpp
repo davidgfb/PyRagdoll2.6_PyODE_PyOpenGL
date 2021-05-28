@@ -8,11 +8,17 @@ class Coche {
 			IDs_GeomsCajas[1];
 	dSpaceID ID_EspacioCoche;
 	
+	dReal dimensiones[3] = {LENGTH, WIDTH, HEIGHT};
+	
 	public: 
 		Coche() {
 		
 		}
-	
+				
+		dReal* getDims() {
+			return dimensiones;
+		}
+			
 		Coche(dWorldID ID_Mundo, dBodyID* IDs_Cuerpos, float* zunit, float* yunit, dSpaceID ID_Espacio) {
 						cuerpos[0] = Cuerpo(ID_Mundo);
 			IDs_Cuerpos[0] = cuerpos[0].getID(); 
@@ -89,6 +95,10 @@ class Coche {
 			espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[0]);
 			espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[1]);
 			espacio.annade(ID_EspacioCoche, IDs_GeomsEsferas[2]);
+		}
+		
+		void simula() {
+		
 		}
 		
 		dJointID getID_JuntaRuedaDelantera() {
