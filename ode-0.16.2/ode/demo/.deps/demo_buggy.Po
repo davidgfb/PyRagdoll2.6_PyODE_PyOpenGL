@@ -102,9 +102,7 @@ demo_buggy.o: demo_buggy.cpp /usr/include/stdc-predef.h \
  ../../include/ode/threading_impl.h ../../include/ode/export-dif.h \
  ../../include/ode/version.h ../../include/ode/odecpp.h \
  ../../include/ode/odecpp_collision.h ../../include/drawstuff/drawstuff.h \
- ../../include/drawstuff/version.h Ragdoll.cpp Ragdoll.h Matriz.cpp \
- Caja.cpp Espacio.cpp Cuerpo.cpp Junta.cpp Coche.cpp Demo_Buggy.h \
- Semaforo.cpp
+ ../../include/drawstuff/version.h Semaforo.cpp
 
 /usr/include/stdc-predef.h:
 
@@ -365,23 +363,5 @@ demo_buggy.o: demo_buggy.cpp /usr/include/stdc-predef.h \
 ../../include/drawstuff/drawstuff.h:
 
 ../../include/drawstuff/version.h:
-
-Ragdoll.cpp:
-
-Ragdoll.h:
-
-Matriz.cpp:
-
-Caja.cpp:
-
-Espacio.cpp:
-
-Cuerpo.cpp:
-
-Junta.cpp:
-
-Coche.cpp:
-
-Demo_Buggy.h:
 
 Semaforo.cpp:
